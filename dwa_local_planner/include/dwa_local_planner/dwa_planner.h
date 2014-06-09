@@ -160,6 +160,7 @@ namespace dwa_local_planner {
       boost::mutex configuration_mutex_;
       pcl::PointCloud<base_local_planner::MapGridCostPoint>* traj_cloud_;
       pcl_ros::Publisher<base_local_planner::MapGridCostPoint> traj_cloud_pub_;
+      ros::Publisher traj_marker_pub_;
       bool publish_cost_grid_pc_; ///< @brief Whether or not to build and publish a PointCloud
       bool publish_traj_pc_;
 

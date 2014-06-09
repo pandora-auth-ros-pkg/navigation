@@ -52,6 +52,9 @@
 
 #include <angles/angles.h>
 #include <costmap_2d/costmap_2d.h>
+#include <base_local_planner/trajectory.h>
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 
 namespace base_local_planner {
 
@@ -80,6 +83,9 @@ namespace base_local_planner {
    * @param  r,g,b,a The color and alpha value to use when publishing
    */
   void publishPlan(const std::vector<geometry_msgs::PoseStamped>& path, const ros::Publisher& pub);
+
+
+  void publishTrajectories(const std::vector<base_local_planner::Trajectory>& traj, const ros::Publisher& pub);
 
   /**
    * @brief  Trim off parts of the global plan that are far enough behind the robot

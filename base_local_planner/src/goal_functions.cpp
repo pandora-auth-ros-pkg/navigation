@@ -69,6 +69,45 @@ namespace base_local_planner {
     pub.publish(gui_path);
   }
 
+  void publishTrajectories(const std::vector<base_local_planner::Trajectory>& traj, const ros::Publisher& pub)
+  {
+    //given an empty path we won't do anything
+    if(traj.empty())
+      return;
+
+    visualization_msgs::MarkerArray trajectories;
+
+    for(std::vector<base_local_planner::Trajectory>::const_iterator t=traj.begin(); t != traj.end(); ++t)
+    {
+      visualization_msgs::Marker trajectory;
+      trajectory.header.frame_id = "map";
+      trajectory.header.stamp = ros::Time::now();
+      trajectory.ns = "trajectory";
+      trajectory.type = visualization_msgs::Marker::LINE_STRIP;
+      trajectory.action = visualization_msgs::Marker::ADD;
+      trajectory.id = 0;
+      trajectory.scale.x = 0.1;
+      trajectory.color.g = 1.0;
+      trajectory.color.a = 1.0;
+      trajectory.pose.orientation.w = 1.0;
+
+      for(unsigned int i = 0; i < t->getPointsSize(); ++i) {
+        geometry_msgs::Point pt;
+        double p_x, p_y, p_th;
+        t->getPoint(i, p_x, p_y, p_th);
+        pt.x = p_x;
+        pt.y = p_y;
+        pt.z = 0;
+//~         pt.total_cost=t->cost_;
+        trajectory.points.push_back(pt);
+      }
+
+      trajectories.markers.push_back(trajectory);
+    }
+    
+    pub.publish(trajectories);
+  }
+
   void prunePlan(const tf::Stamped<tf::Pose>& global_pose, std::vector<geometry_msgs::PoseStamped>& plan, std::vector<geometry_msgs::PoseStamped>& global_plan){
     ROS_ASSERT(global_plan.size() >= plan.size());
     std::vector<geometry_msgs::PoseStamped>::iterator it = plan.begin();

@@ -162,13 +162,15 @@ namespace dwa_local_planner {
     traj_cloud_pub_.advertise(private_nh, "trajectory_cloud", 1);
     private_nh.param("publish_traj_pc", publish_traj_pc_, false);
 
+    traj_marker_pub_ = private_nh.advertise<visualization_msgs::MarkerArray>("trajectories", 1000);
+
     // set up all the cost functions that will be applied in order
     // (any function returning negative values will abort scoring, so the order can improve performance)
     std::vector<base_local_planner::TrajectoryCostFunction*> critics;
     critics.push_back(&oscillation_costs_); // discards oscillating motions (assisgns cost -1)
     critics.push_back(&obstacle_costs_); // discards trajectories that move into obstacles
-    critics.push_back(&goal_front_costs_); // prefers trajectories that make the nose go towards (local) nose goal
-    critics.push_back(&alignment_costs_); // prefers trajectories that keep the robot nose on nose path
+//~     critics.push_back(&goal_front_costs_); // prefers trajectories that make the nose go towards (local) nose goal
+//~     critics.push_back(&alignment_costs_); // prefers trajectories that keep the robot nose on nose path
     critics.push_back(&path_costs_); // prefers trajectories on global path
     critics.push_back(&goal_costs_); // prefers trajectories that go towards (local) goal, based on wave propagation
 
@@ -345,6 +347,8 @@ namespace dwa_local_planner {
             }
         }
         traj_cloud_pub_.publish(*traj_cloud_);
+
+        base_local_planner::publishTrajectories(all_explored, traj_marker_pub_);
     }
 
     // verbose publishing of point clouds
