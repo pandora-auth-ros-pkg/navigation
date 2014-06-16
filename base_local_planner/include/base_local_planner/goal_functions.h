@@ -49,6 +49,7 @@
 
 #include <string>
 #include <cmath>
+#include <boost/foreach.hpp>
 
 #include <angles/angles.h>
 #include <costmap_2d/costmap_2d.h>

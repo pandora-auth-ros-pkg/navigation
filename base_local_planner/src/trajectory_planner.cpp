@@ -183,6 +183,10 @@ namespace base_local_planner{
     escaping_ = false;
     final_goal_position_valid_ = false;
 
+    ros::NodeHandle private_nh("~");
+
+    traj_marker_pub_ = private_nh.advertise<visualization_msgs::MarkerArray>("trajectories", 1000);
+
 
     costmap_2d::calculateMinAndMaxDistances(footprint_spec_, inscribed_radius_, circumscribed_radius_);
   }
@@ -590,6 +594,8 @@ namespace base_local_planner{
 
     Trajectory* swap = NULL;
 
+    std::vector<Trajectory> trajectories;
+
     //any cell with a cost greater than the size of the map is impossible
     double impossible_cost = path_map_.obstacleCosts();
 
@@ -601,6 +607,7 @@ namespace base_local_planner{
         //first sample the straight trajectory
         generateTrajectory(x, y, theta, vx, vy, vtheta, vx_samp, vy_samp, vtheta_samp, 
             acc_x, acc_y, acc_theta, impossible_cost, *comp_traj);
+        trajectories.push_back(*comp_traj);
 
         //if the new trajectory is better... let's take it
         if(comp_traj->cost_ >= 0 && (comp_traj->cost_ < best_traj->cost_ || best_traj->cost_ < 0)){
@@ -614,6 +621,8 @@ namespace base_local_planner{
         for(int j = 0; j < vtheta_samples_ - 1; ++j){
           generateTrajectory(x, y, theta, vx, vy, vtheta, vx_samp, vy_samp, vtheta_samp, 
               acc_x, acc_y, acc_theta, impossible_cost, *comp_traj);
+          trajectories.push_back(*comp_traj);
+
 
           //if the new trajectory is better... let's take it
           if(comp_traj->cost_ >= 0 && (comp_traj->cost_ < best_traj->cost_ || best_traj->cost_ < 0)){
@@ -672,6 +681,8 @@ namespace base_local_planner{
 
       generateTrajectory(x, y, theta, vx, vy, vtheta, vx_samp, vy_samp, vtheta_samp_limited, 
           acc_x, acc_y, acc_theta, impossible_cost, *comp_traj);
+      trajectories.push_back(*comp_traj);
+
 
       //if the new trajectory is better... let's take it... 
       //note if we can legally rotate in place we prefer to do that rather than move with y velocity
@@ -757,6 +768,8 @@ namespace base_local_planner{
           fabs(angles::shortest_angular_distance(escape_theta_, theta)) > escape_reset_theta_){
         escaping_ = false;
       }
+
+      base_local_planner::publishTrajectories(trajectories, traj_marker_pub_);
 
       return *best_traj;
     }

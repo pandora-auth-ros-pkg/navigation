@@ -61,6 +61,9 @@
 #include <base_local_planner/map_cell.h>
 #include <base_local_planner/map_grid.h>
 
+#include <visualization_msgs/MarkerArray.h>
+#include "base_local_planner/goal_functions.h"
+
 namespace base_local_planner {
   /**
    * @class TrajectoryPlanner
@@ -319,6 +322,8 @@ namespace base_local_planner {
       double inscribed_radius_, circumscribed_radius_;
 
       boost::mutex configuration_mutex_;
+
+      ros::Publisher traj_marker_pub_;
 
       /**
        * @brief  Compute x position based on velocity

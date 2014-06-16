@@ -77,7 +77,19 @@ namespace base_local_planner {
 
     visualization_msgs::MarkerArray trajectories;
 
-    for(std::vector<base_local_planner::Trajectory>::const_iterator t=traj.begin(); t != traj.end(); ++t)
+    int id = 0;
+
+    // find max
+    double max = traj[0].cost_;
+
+    for (int i = 1; i < traj.size(); i++) {
+      if (traj[i].cost_ > max) {
+        max = traj[i].cost_;
+      }
+    }
+    
+
+    BOOST_FOREACH(const base_local_planner::Trajectory& t, traj)
     {
       visualization_msgs::Marker trajectory;
       trajectory.header.frame_id = "map";
@@ -85,26 +97,49 @@ namespace base_local_planner {
       trajectory.ns = "trajectory";
       trajectory.type = visualization_msgs::Marker::LINE_STRIP;
       trajectory.action = visualization_msgs::Marker::ADD;
-      trajectory.id = 0;
-      trajectory.scale.x = 0.1;
-      trajectory.color.g = 1.0;
+      trajectory.id = id++;
+      trajectory.scale.x = 0.002;
       trajectory.color.a = 1.0;
       trajectory.pose.orientation.w = 1.0;
 
-      for(unsigned int i = 0; i < t->getPointsSize(); ++i) {
+      if (t.cost_ <= 0) {
+        trajectory.color.r = 1.0;
+      }
+      else {
+        trajectory.color.b = 1 - (t.cost_ / max);
+        trajectory.color.r = t.cost_ / max;
+      }
+      
+
+      for(unsigned int i = 0; i < t.getPointsSize(); ++i) {
         geometry_msgs::Point pt;
         double p_x, p_y, p_th;
-        t->getPoint(i, p_x, p_y, p_th);
+        t.getPoint(i, p_x, p_y, p_th);
         pt.x = p_x;
         pt.y = p_y;
         pt.z = 0;
-//~         pt.total_cost=t->cost_;
         trajectory.points.push_back(pt);
       }
 
+      if (fabs(t.xv_) < 1e-3 && fabs(t.yv_) < 1e-3) {
+//~         ROS_ERROR("%ld %f %f %f", trajectory.points.size(), t.xv_, t.yv_, t.thetav_);
+        geometry_msgs::Point center = trajectory.points[0];
+        trajectory.points.clear();
+
+        for (int i = 0; i < 180; i++) {
+          geometry_msgs::Point pt;
+          pt.x = cos(i * 3.14159265359 / 180.0) * t.thetav_ * 0.1 + center.x;
+          pt.y = sin(i * 3.14159265359 / 180.0) * t.thetav_ * 0.1 + center.y;
+
+          trajectory.points.push_back(pt);
+        }
+        
+      }
+      
+
       trajectories.markers.push_back(trajectory);
     }
-    
+
     pub.publish(trajectories);
   }
 

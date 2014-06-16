@@ -357,6 +357,8 @@ namespace base_local_planner {
       return false;
     }
 
+    ROS_INFO("Got new plan");
+
     //reset the global plan
     global_plan_.clear();
     global_plan_ = orig_global_plan;

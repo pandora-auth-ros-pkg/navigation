@@ -40,6 +40,7 @@
 #include <cmath>
 
 #include <base_local_planner/velocity_iterator.h>
+#include <ros/ros.h>
 
 namespace base_local_planner {
 
@@ -78,8 +79,10 @@ void SimpleTrajectoryGenerator::initialise(
   sample_params_.clear();
 
   double min_vel_x = limits->min_vel_x;
+//~   double min_vel_x = -limits->max_vel_x;
   double max_vel_x = limits->max_vel_x;
   double min_vel_y = limits->min_vel_y;
+//~   double min_vel_y = -limits->max_vel_y;
   double max_vel_y = limits->max_vel_y;
 
   // if sampling number is zero in any dimension, we don't generate samples generically
@@ -124,7 +127,7 @@ void SimpleTrajectoryGenerator::initialise(
         vel_samp[1] = y_it.getVelocity();
         for(; !th_it.isFinished(); th_it++) {
           vel_samp[2] = th_it.getVelocity();
-          //ROS_DEBUG("Sample %f, %f, %f", vel_samp[0], vel_samp[1], vel_samp[2]);
+//~           ROS_ERROR("Sample %f, %f, %f", vel_samp[0], vel_samp[1], vel_samp[2]);
           sample_params_.push_back(vel_samp);
         }
         th_it.reset();
