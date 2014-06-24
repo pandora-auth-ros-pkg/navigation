@@ -64,22 +64,27 @@ void Costmap2D::deleteMaps()
 void Costmap2D::initMaps(unsigned int size_x, unsigned int size_y)
 {
   boost::unique_lock < boost::shared_mutex > lock(*access_);
+  //~ cout<<"Before new in Costmap\n";
   costmap_ = new unsigned char[size_x * size_y];
 }
 
 void Costmap2D::resizeMap(unsigned int size_x, unsigned int size_y, double resolution,
                           double origin_x, double origin_y)
 {
+  
+  boost::unique_lock < boost::shared_mutex > lock(*access_);
+  
   size_x_ = size_x;
   size_y_ = size_y;
   resolution_ = resolution;
   origin_x_ = origin_x;
   origin_y_ = origin_y;
+  
+  delete[] costmap_;
+  costmap_ = new unsigned char[size_x * size_y];
+  memset(costmap_, default_value_, size_x_ * size_y_ * sizeof(unsigned char));
 
-  initMaps(size_x, size_y);
-
-  // reset our maps to have no information
-  resetMaps();
+  
 }
 
 void Costmap2D::resetMaps()

@@ -75,7 +75,7 @@ void InflationLayer::matchSize()
 
   unsigned int size_x = costmap->getSizeInCellsX(), size_y = costmap->getSizeInCellsY();
   if (seen_)
-    delete seen_;
+    delete[] seen_;
   seen_ = new bool[size_x * size_y];
 }
 

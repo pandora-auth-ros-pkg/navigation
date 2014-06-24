@@ -167,6 +167,8 @@ private:
   unsigned int bx0_, bxn_, by0_, byn_;
 
   std::vector<boost::shared_ptr<Layer> > plugins_;
+  
+  bool global_lock_on_resize;
 
   bool initialized_;
   bool size_locked_;
