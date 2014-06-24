@@ -119,7 +119,8 @@ namespace dwa_local_planner {
       path_costs_(planner_util->getCostmap()),
       goal_costs_(planner_util->getCostmap(), 0.0, 0.0, true),
       goal_front_costs_(planner_util->getCostmap(), 0.0, 0.0, true),
-      alignment_costs_(planner_util->getCostmap())
+      alignment_costs_(planner_util->getCostmap()),
+      prefer_forward_(-1.0)
   {
     ros::NodeHandle private_nh("~/" + name);
 
@@ -173,7 +174,8 @@ namespace dwa_local_planner {
     critics.push_back(&alignment_costs_); // prefers trajectories that keep the robot nose on nose path
     critics.push_back(&path_costs_); // prefers trajectories on global path
     critics.push_back(&goal_costs_); // prefers trajectories that go towards (local) goal, based on wave propagation
-
+    critics.push_back(&prefer_forward_);
+    
     // trajectory generators
     std::vector<base_local_planner::TrajectorySampleGenerator*> generator_list;
     generator_list.push_back(&generator_);
@@ -349,6 +351,9 @@ namespace dwa_local_planner {
         traj_cloud_pub_.publish(*traj_cloud_);
 
         base_local_planner::publishTrajectories(all_explored, traj_marker_pub_);
+
+        BOOST_FOREACH(const base_local_planner::Trajectory& t, all_explored)
+          ROS_INFO("%f %f %f", t.xv_, t.thetav_, t.cost_);
     }
 
     // verbose publishing of point clouds

@@ -78,8 +78,8 @@ void SimpleTrajectoryGenerator::initialise(
   next_sample_index_ = 0;
   sample_params_.clear();
 
-  double min_vel_x = limits->min_vel_x;
-//~   double min_vel_x = -limits->max_vel_x;
+///  double min_vel_x = limits->min_vel_x;
+  double min_vel_x = -limits->max_vel_x;
   double max_vel_x = limits->max_vel_x;
   double min_vel_y = limits->min_vel_y;
 //~   double min_vel_y = -limits->max_vel_y;
@@ -127,7 +127,7 @@ void SimpleTrajectoryGenerator::initialise(
         vel_samp[1] = y_it.getVelocity();
         for(; !th_it.isFinished(); th_it++) {
           vel_samp[2] = th_it.getVelocity();
-//~           ROS_ERROR("Sample %f, %f, %f", vel_samp[0], vel_samp[1], vel_samp[2]);
+//           ROS_ERROR("Sample %f, %f, %f", vel_samp[0], vel_samp[1], vel_samp[2]);
           sample_params_.push_back(vel_samp);
         }
         th_it.reset();
@@ -210,7 +210,7 @@ bool SimpleTrajectoryGenerator::generateTrajectory(
     double sim_time_distance = vmag * sim_time_; // the distance the robot would travel in sim_time if it did not change velocity
     double sim_time_angle = fabs(sample_target_vel[2]) * sim_time_; // the angle the robot would rotate in sim_time
     num_steps =
-        ceil(std::max(sim_time_distance / sim_granularity_,
+        ceil(std::max(fabs(sim_time_distance / sim_granularity_),
             sim_time_angle    / angular_sim_granularity_));
   }
 
