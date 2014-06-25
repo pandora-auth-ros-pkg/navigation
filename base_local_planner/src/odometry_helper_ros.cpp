@@ -68,7 +68,7 @@ void OdometryHelperRos::getRobotVel(tf::Stamped<tf::Pose>& robot_vel) {
     boost::mutex::scoped_lock lock(odom_mutex_);
     global_vel.linear.x = base_odom_.twist.twist.linear.x;
     global_vel.linear.y = base_odom_.twist.twist.linear.y;
-    global_vel.angular.z = base_odom_.twist.twist.angular.z / 2.0;
+    global_vel.angular.z = base_odom_.twist.twist.angular.z;
   }
   robot_vel.setData(tf::Transform(tf::createQuaternionFromYaw(global_vel.angular.z), tf::Vector3(global_vel.linear.x, global_vel.linear.y, 0)));
   robot_vel.frame_id_ = frame_id_;//costmap_ros_->getBaseFrameID();

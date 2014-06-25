@@ -14,23 +14,23 @@ from dynamic_reconfigure.parameter_generator_catkin import double_t, bool_t
 
 def add_generic_localplanner_params(gen):
     # velocities
-    gen.add("max_trans_vel", double_t, 0, "The absolute value of the maximum translational velocity for the robot in m/s", 0.4, 0)
+    gen.add("max_trans_vel", double_t, 0, "The absolute value of the maximum translational velocity for the robot in m/s", 0.15, 0)
     gen.add("min_trans_vel", double_t, 0, "The absolute value of the minimum translational velocity for the robot in m/s", 0.0, 0)
 
-    gen.add("max_vel_x", double_t, 0, "The maximum x velocity for the robot in m/s", 0.4)
+    gen.add("max_vel_x", double_t, 0, "The maximum x velocity for the robot in m/s", 0.15)
     gen.add("min_vel_x", double_t, 0, "The minimum x velocity for the robot in m/s", 0.0)
 
     gen.add("max_vel_y", double_t, 0, "The maximum y velocity for the robot in m/s", 0.0)
     gen.add("min_vel_y", double_t, 0, "The minimum y velocity for the robot in m/s", 0.0)
 
-    gen.add("max_rot_vel", double_t, 0, "The absolute value of the maximum rotational velocity for the robot in rad/s",  1.2, 0)
-    gen.add("min_rot_vel", double_t, 0, "The absolute value of the minimum rotational velocity for the robot in rad/s", 0.2, 0)
+    gen.add("max_rot_vel", double_t, 0, "The absolute value of the maximum rotational velocity for the robot in rad/s",  0.25, 0)
+    gen.add("min_rot_vel", double_t, 0, "The absolute value of the minimum rotational velocity for the robot in rad/s", 0.1, 0)
 
     # acceleration
     gen.add("acc_lim_x", double_t, 0, "The acceleration limit of the robot in the x direction", 1.0, 0, 20.0)
     gen.add("acc_lim_y", double_t, 0, "The acceleration limit of the robot in the y direction", 0.0, 0, 20.0)
-    gen.add("acc_lim_theta", double_t, 0, "The acceleration limit of the robot in the theta direction", 3.2, 0, 20.0)
-    gen.add("acc_limit_trans", double_t, 0, "The absolute value of the maximum translational acceleration for the robot in m/s^2", 0.63, 0)
+    gen.add("acc_lim_theta", double_t, 0, "The acceleration limit of the robot in the theta direction", 4.2, 0, 20.0)
+    gen.add("acc_limit_trans", double_t, 0, "The absolute value of the maximum translational acceleration for the robot in m/s^2", 1.0, 0)
 
     #  # jerk
     #  gen.add("jerk_lim_trans", double_t, 0, "The absolute value of the maximum translational jerk for the robot in m/s^3", 0.1, 0)
