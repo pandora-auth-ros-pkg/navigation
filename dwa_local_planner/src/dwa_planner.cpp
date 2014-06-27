@@ -120,7 +120,7 @@ namespace dwa_local_planner {
       goal_costs_(planner_util->getCostmap(), 0.0, 0.0, true),
       goal_front_costs_(planner_util->getCostmap(), 0.0, 0.0, true),
       alignment_costs_(planner_util->getCostmap()),
-      prefer_forward_(-1.0)
+      prefer_forward_(0.0)
   {
     ros::NodeHandle private_nh("~/" + name);
 
@@ -352,8 +352,8 @@ namespace dwa_local_planner {
 
         base_local_planner::publishTrajectories(all_explored, traj_marker_pub_);
 
-        BOOST_FOREACH(const base_local_planner::Trajectory& t, all_explored)
-          ROS_INFO("%f %f %f", t.xv_, t.thetav_, t.cost_);
+//        BOOST_FOREACH(const base_local_planner::Trajectory& t, all_explored)
+//          ROS_INFO("%f %f %f", t.xv_, t.thetav_, t.cost_);
     }
 
     // verbose publishing of point clouds

@@ -210,7 +210,7 @@ bool SimpleTrajectoryGenerator::generateTrajectory(
     double sim_time_distance = vmag * sim_time_; // the distance the robot would travel in sim_time if it did not change velocity
     double sim_time_angle = fabs(sample_target_vel[2]) * sim_time_; // the angle the robot would rotate in sim_time
     num_steps =
-        ceil(std::max(fabs(sim_time_distance / sim_granularity_),
+        ceil(std::max(sim_time_distance / sim_granularity_,
             sim_time_angle    / angular_sim_granularity_));
   }
 
