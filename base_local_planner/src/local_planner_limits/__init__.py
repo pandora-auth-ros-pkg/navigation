@@ -14,16 +14,16 @@ from dynamic_reconfigure.parameter_generator_catkin import double_t, bool_t
 
 def add_generic_localplanner_params(gen):
     # velocities
-    gen.add("max_trans_vel", double_t, 0, "The absolute value of the maximum translational velocity for the robot in m/s", 0.25, 0)
+    gen.add("max_trans_vel", double_t, 0, "The absolute value of the maximum translational velocity for the robot in m/s", 0.15, 0)
     gen.add("min_trans_vel", double_t, 0, "The absolute value of the minimum translational velocity for the robot in m/s", 0.0, 0)
 
-    gen.add("max_vel_x", double_t, 0, "The maximum x velocity for the robot in m/s", 0.25)
+    gen.add("max_vel_x", double_t, 0, "The maximum x velocity for the robot in m/s", 0.15)
     gen.add("min_vel_x", double_t, 0, "The minimum x velocity for the robot in m/s", 0.0)
 
     gen.add("max_vel_y", double_t, 0, "The maximum y velocity for the robot in m/s", 0.0)
     gen.add("min_vel_y", double_t, 0, "The minimum y velocity for the robot in m/s", 0.0)
 
-    gen.add("max_rot_vel", double_t, 0, "The absolute value of the maximum rotational velocity for the robot in rad/s",  0.55, 0)
+    gen.add("max_rot_vel", double_t, 0, "The absolute value of the maximum rotational velocity for the robot in rad/s",  0.35, 0)
     gen.add("min_rot_vel", double_t, 0, "The absolute value of the minimum rotational velocity for the robot in rad/s", 0.05, 0)
 
     # acceleration

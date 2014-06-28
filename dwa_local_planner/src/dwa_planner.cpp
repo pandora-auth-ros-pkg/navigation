@@ -83,6 +83,10 @@ namespace dwa_local_planner {
     // obstacle costs can vary due to scaling footprint feature
     obstacle_costs_.setParams(config.max_trans_vel, config.max_scaling_factor, config.scaling_speed);
 
+    //params for prefer forward
+    prefer_forward_.setScale(resolution * config.prefer_forward_scale);
+    prefer_forward_.setPenalty(resolution * config.prefer_forward_penalty);
+
     int vx_samp, vy_samp, vth_samp;
     vx_samp = config.vx_samples;
     vy_samp = config.vy_samples;
@@ -352,8 +356,8 @@ namespace dwa_local_planner {
 
         base_local_planner::publishTrajectories(all_explored, traj_marker_pub_);
 
-//        BOOST_FOREACH(const base_local_planner::Trajectory& t, all_explored)
-//          ROS_INFO("%f %f %f", t.xv_, t.thetav_, t.cost_);
+        BOOST_FOREACH(const base_local_planner::Trajectory& t, all_explored)
+          ROS_INFO("%f %f %f", t.xv_, t.thetav_, t.cost_);
     }
 
     // verbose publishing of point clouds
