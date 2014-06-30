@@ -109,6 +109,8 @@ add_library(layers
   plugins/obstacle_layer.cpp
   plugins/static_layer.cpp
   plugins/voxel_layer.cpp
+  plugins/coverage_layer.cpp
+  plugins/map_layer.cpp
   src/observation_buffer.cpp
 )
 target_link_libraries(layers

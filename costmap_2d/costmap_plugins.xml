@@ -3,6 +3,12 @@
     <class type="costmap_2d::FootprintLayer"  base_class_type="costmap_2d::Layer">
       <description>Clears the area in the costmap under the footprint of the robot.</description>
     </class>
+    <class type="costmap_2d::CoverageLayer"  base_class_type="costmap_2d::Layer">
+      <description>Clears the area in the costmap under the footprint of the robot.</description>
+    </class>
+    <class type="costmap_2d::MapLayer"  base_class_type="costmap_2d::Layer">
+      <description>Clears the area in the costmap under the footprint of the robot.</description>
+    </class>
     <class type="costmap_2d::InflationLayer"  base_class_type="costmap_2d::Layer">
       <description>Inflates obstacles to speed collision checking and to make robot prefer to stay away from obstacles.</description>
     </class>
