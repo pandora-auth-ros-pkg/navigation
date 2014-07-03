@@ -44,11 +44,13 @@ namespace base_local_planner {
 void LocalPlannerUtil::initialize(
     tf::TransformListener* tf,
     costmap_2d::Costmap2D* costmap,
-    std::string global_frame) {
+    std::string global_frame,
+    std::vector<geometry_msgs::Point> footprint_spec) {
   if(!initialized_) {
     tf_ = tf;
     costmap_ = costmap;
     global_frame_ = global_frame;
+    footprint_spec_ = footprint_spec;
     initialized_ = true;
   }
   else{

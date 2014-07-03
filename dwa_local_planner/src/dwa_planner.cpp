@@ -253,6 +253,8 @@ namespace dwa_local_planner {
       global_plan_[i] = new_plan[i];
     }
 
+    obstacle_costs_.setFootprint(planner_util_->getFootprint());
+    
     // costs for going away from path
     path_costs_.setTargetPoses(global_plan_);
 

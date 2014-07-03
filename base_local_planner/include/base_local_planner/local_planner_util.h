@@ -68,6 +68,8 @@ private:
 
   std::vector<geometry_msgs::PoseStamped> global_plan_;
 
+  std::vector<geometry_msgs::Point> footprint_spec_;
+
 
   boost::mutex limits_configuration_mutex_;
   bool setup_;
@@ -89,7 +91,8 @@ public:
 
   void initialize(tf::TransformListener* tf,
       costmap_2d::Costmap2D* costmap,
-      std::string global_frame);
+      std::string global_frame,
+      std::vector<geometry_msgs::Point> footprint_spec);
 
   bool getGoal(tf::Stamped<tf::Pose>& goal_pose);
 
@@ -98,6 +101,8 @@ public:
   bool getLocalPlan(tf::Stamped<tf::Pose>& global_pose, std::vector<geometry_msgs::PoseStamped>& transformed_plan);
 
   costmap_2d::Costmap2D* getCostmap();
+
+  std::vector<geometry_msgs::Point> getFootprint() { return footprint_spec_; }
 
   LocalPlannerLimits getCurrentLimits();
 
