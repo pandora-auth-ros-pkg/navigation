@@ -206,7 +206,7 @@ bool LatchedStopRotateController::computeVelocityCommandsStopRotate(geometry_msg
   //we assume the global goal is the last point in the global plan
   tf::Stamped<tf::Pose> goal_pose;
   if ( ! planner_util->getGoal(goal_pose)) {
-    ROS_ERROR("Could not get goal pose");
+    ROS_ERROR("[base_local_planner-latcher] Could not get goal pose");
     return false;
   }
 

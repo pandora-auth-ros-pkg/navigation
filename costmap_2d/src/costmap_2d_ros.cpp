@@ -511,7 +511,7 @@ void Costmap2DROS::movementCB(const ros::TimerEvent &event)
 
   if (!getRobotPose(new_pose))
   {
-    ROS_WARN_THROTTLE(1.0, "Could not get robot pose, cancelling reconfiguration");
+    ROS_WARN_THROTTLE(1.0, "[Costmap2DROS] Could not get robot pose, cancelling reconfiguration");
     robot_stopped_ = false;
   }
   //make sure that the robot is not moving
@@ -565,7 +565,7 @@ void Costmap2DROS::mapUpdateLoop(double frequency)
     r.sleep();
     // make sure to sleep for the remainder of our cycle time
     if (r.cycleTime() > ros::Duration(1 / frequency))
-      ROS_WARN("Map update loop missed its desired rate of %.4fHz... the loop actually took %.4f seconds", frequency,
+      ROS_WARN("[Costmap2DROS] Map update loop missed its desired rate of %.4fHz... the loop actually took %.4f seconds", frequency,
                r.cycleTime().toSec());
   }
 }

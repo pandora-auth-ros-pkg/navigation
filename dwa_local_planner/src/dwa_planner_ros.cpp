@@ -136,7 +136,7 @@ namespace dwa_local_planner {
     //when we get a new plan, we also want to clear any latch we may have on goal tolerances
     latchedStopRotateController_.resetLatching();
 
-    ROS_INFO("Got new plan");
+    ROS_INFO("[DWAPlannerROS] Got new plan");
     return dp_->setPlan(orig_global_plan);
   }
 
@@ -146,12 +146,12 @@ namespace dwa_local_planner {
       return false;
     }
     if ( ! costmap_ros_->getRobotPose(current_pose_)) {
-      ROS_ERROR("Could not get robot pose");
+      ROS_ERROR("[DWAPlannerROS] Could not get robot pose (reconf)");
       return false;
     }
 
     if(latchedStopRotateController_.isGoalReached(&planner_util_, odom_helper_, current_pose_)) {
-      ROS_INFO("Goal reached");
+      ROS_INFO("[DWAPlannerROS] Goal reached");
       return true;
     } else {
       return false;
@@ -196,7 +196,7 @@ namespace dwa_local_planner {
     
     // call with updated footprint
     base_local_planner::Trajectory path = dp_->findBestPath(global_pose, robot_vel, drive_cmds, costmap_ros_->getRobotFootprint());
-    ROS_WARN("Best: %.2f, %.2f, %.2f, %.2f", path.xv_, path.yv_, path.thetav_, path.cost_);
+    ROS_WARN("[DWA] Best: %.2f, %.2f, %.2f, %.2f", path.xv_, path.yv_, path.thetav_, path.cost_);
 
     /* For timing uncomment
     gettimeofday(&end, NULL);
@@ -252,18 +252,18 @@ namespace dwa_local_planner {
   bool DWAPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel) {
     // dispatches to either dwa sampling control or stop and rotate control, depending on whether we have been close enough to goal
     if ( ! costmap_ros_->getRobotPose(current_pose_)) {
-      ROS_ERROR("Could not get robot pose");
+      ROS_ERROR("[DWA] Could not get robot pose (computeVelocityCommands)");
       return false;
     }
     std::vector<geometry_msgs::PoseStamped> transformed_plan;
     if ( ! planner_util_.getLocalPlan(current_pose_, transformed_plan)) {
-      ROS_ERROR("Could not get local plan");
+      ROS_ERROR("[DWA] Could not get local plan");
       return false;
     }
 
     //if the global plan passed in is empty... we won't do anything
     if(transformed_plan.empty()) {
-      ROS_WARN_NAMED("dwa_local_planner", "Received an empty transformed plan.");
+      ROS_WARN("[DWA] Received an empty transformed plan.");
       return false;
     }
     ROS_DEBUG_NAMED("dwa_local_planner", "Received a transformed plan with %zu points.", transformed_plan.size());

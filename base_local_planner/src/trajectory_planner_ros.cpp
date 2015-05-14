@@ -357,7 +357,7 @@ namespace base_local_planner {
       return false;
     }
 
-    ROS_INFO("Got new plan");
+    ROS_INFO("[TrajectoryPlannerROS] Got new plan");
 
     //reset the global plan
     global_plan_.clear();
