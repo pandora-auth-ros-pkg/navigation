@@ -27,12 +27,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include<costmap_2d/costmap_math.h>
+#include <costmap_2d/costmap_math.h>
 #include <boost/tokenizer.hpp>
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 #include <costmap_2d/footprint.h>
-#include<geometry_msgs/Point32.h>
+#include <geometry_msgs/Point32.h>
 
 namespace costmap_2d
 {

@@ -84,6 +84,7 @@ void ClearCostmapRecovery::runBehavior(){
 }
 
 void ClearCostmapRecovery::clear(costmap_2d::Costmap2DROS* costmap){
+  // each plugin is a layer
   std::vector<boost::shared_ptr<costmap_2d::Layer> >* plugins = costmap->getLayeredCostmap()->getPlugins();
 
   tf::Stamped<tf::Pose> pose;
@@ -96,9 +97,16 @@ void ClearCostmapRecovery::clear(costmap_2d::Costmap2DROS* costmap){
   double x = pose.getOrigin().x();
   double y = pose.getOrigin().y();
 
+  // Se auto to for gia kathe ena plugin, dld gia kathe layer, pairnei to onoma tou layer kai psaxnei na dei an einai idio
+  // me thn parametro layer_search_string
   for (std::vector<boost::shared_ptr<costmap_2d::Layer> >::iterator pluginp = plugins->begin(); pluginp != plugins->end(); ++pluginp) {
     boost::shared_ptr<costmap_2d::Layer> plugin = *pluginp;
-    if(plugin->getName().find(layer_search_string_)!=std::string::npos){
+    if(plugin->getName().find(layer_search_string_)!=std::string::npos)
+    {
+      // kanei downcast to Layer se obstacle layer o costmap2dROS to vlepei san layer omws
+      // tautoxrona exoume ftiaxei ena reference se obstacle layer gia na kanoume th douleia mas
+      // opote o costmap2DROS vlepei kanonika to clear sto layer tou, apla emeis tou anaferomaste
+      // san obstacle layer.
       boost::shared_ptr<costmap_2d::ObstacleLayer> costmap;
       costmap = boost::static_pointer_cast<costmap_2d::ObstacleLayer>(plugin);
       clearMap(costmap, x, y);
@@ -111,12 +119,16 @@ void ClearCostmapRecovery::clearMap(boost::shared_ptr<costmap_2d::ObstacleLayer>
                                         double pose_x, double pose_y){
   boost::unique_lock< boost::shared_mutex > lock(*(costmap->getLock()));
  
+  // world coordinates
   double start_point_x = pose_x - reset_distance_ / 2;
   double start_point_y = pose_y - reset_distance_ / 2;
   double end_point_x = start_point_x + reset_distance_;
   double end_point_y = start_point_y + reset_distance_;
 
+  // map coordinates
   int start_x, start_y, end_x, end_y;
+  
+  // Converts world coordinates to map coordinates 
   costmap->worldToMapNoBounds(start_point_x, start_point_y, start_x, start_y);
   costmap->worldToMapNoBounds(end_point_x, end_point_y, end_x, end_y);
 

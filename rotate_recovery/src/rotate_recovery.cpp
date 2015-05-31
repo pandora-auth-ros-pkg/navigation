@@ -65,12 +65,17 @@ void RotateRecovery::initialize(std::string name, tf::TransformListener* tf,
     blp_nh.param("min_in_place_rotational_vel", min_rotational_vel_, 0.4);
     blp_nh.param("yaw_goal_tolerance", tolerance_, 0.10);
 
+    // To understand that Charlie (dimkirt)
+    //ROS_WARN("[Rotate_Recovery] Starting rotate_recovery with params: acc_lim_th = %f , \n max_rotational_vel = %f , \n min_in_place_rotational_vel = %f ,
+    // \n yaw_goal_tolerance = %f \n , sim_granularity = %f , \n frequency = %f \n", acc_lim_th_, max_rotational_vel_, min_rotational_vel_, tolerance_, 
+    // sim_granularity_, frequency_ );
+
     world_model_ = new base_local_planner::CostmapModel(*local_costmap_->getCostmap());
 
     initialized_ = true;
   }
   else{
-    ROS_ERROR("You should not call initialize twice on this object, doing nothing");
+    ROS_ERROR("[Rotate_Recovery] You should not call initialize twice on this object, doing nothing");
   }
 }
 
@@ -80,15 +85,15 @@ RotateRecovery::~RotateRecovery(){
 
 void RotateRecovery::runBehavior(){
   if(!initialized_){
-    ROS_ERROR("This object must be initialized before runBehavior is called");
+    ROS_ERROR("[Rotate_Recovery] This object must be initialized before runBehavior is called");
     return;
   }
 
   if(global_costmap_ == NULL || local_costmap_ == NULL){
-    ROS_ERROR("The costmaps passed to the RotateRecovery object cannot be NULL. Doing nothing.");
+    ROS_ERROR("[Rotate_Recovery] The costmaps passed to the RotateRecovery object cannot be NULL. Doing nothing.");
     return;
   }
-  ROS_WARN("Rotate recovery behavior started.");
+  ROS_WARN("[Rotate_Recovery] Rotate recovery behavior started.");
 
   ros::Rate r(frequency_);
   ros::NodeHandle n;
@@ -121,7 +126,7 @@ void RotateRecovery::runBehavior(){
       //make sure that the point is legal, if it isn't... we'll abort
       double footprint_cost = world_model_->footprintCost(x, y, theta, local_costmap_->getRobotFootprint(), 0.0, 0.0);
       if(footprint_cost < 0.0){
-        ROS_ERROR("Rotate recovery can't rotate in place because there is a potential collision. Cost: %.2f", footprint_cost);
+        ROS_ERROR("[Rotate_Recovery] Rotate recovery can't rotate in place because there is a potential collision. Cost: %.2f", footprint_cost);
         return;
       }
 
