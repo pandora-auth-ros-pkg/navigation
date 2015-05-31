@@ -65,10 +65,8 @@ void RotateRecovery::initialize(std::string name, tf::TransformListener* tf,
     blp_nh.param("min_in_place_rotational_vel", min_rotational_vel_, 0.4);
     blp_nh.param("yaw_goal_tolerance", tolerance_, 0.10);
 
-    // To understand that Charlie (dimkirt)
-    //ROS_WARN("[Rotate_Recovery] Starting rotate_recovery with params: acc_lim_th = %f , \n max_rotational_vel = %f , \n min_in_place_rotational_vel = %f ,
-    // \n yaw_goal_tolerance = %f \n , sim_granularity = %f , \n frequency = %f \n", acc_lim_th_, max_rotational_vel_, min_rotational_vel_, tolerance_, 
-    // sim_granularity_, frequency_ );
+    // To understand that Charlie (dimkirt) tha fygei
+    ROS_WARN("[Rotate_Recovery] Starting rotate_recovery with params: acc_lim_th = %.2f , max_rotational_vel = %.2f , min_in_place_rotational_vel = %.2f , yaw_goal_tolerance = %.2f , sim_granularity = %.2f , frequency = %.2f ", acc_lim_th_, max_rotational_vel_, min_rotational_vel_, tolerance_, sim_granularity_, frequency_);
 
     world_model_ = new base_local_planner::CostmapModel(*local_costmap_->getCostmap());
 
