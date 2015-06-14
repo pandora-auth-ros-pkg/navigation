@@ -4,7 +4,7 @@
       <description>Clears the area in the costmap under the footprint of the robot.</description>
     </class>
     <class type="costmap_2d::CoverageLayer"  base_class_type="costmap_2d::Layer">
-      <description>Clears the area in the costmap under the footprint of the robot.</description>
+      <description>A layer implemented for the needs of coverage exploration.</description>
     </class>
     <class type="costmap_2d::MapLayer"  base_class_type="costmap_2d::Layer">
       <description>Clears the area in the costmap under the footprint of the robot.</description>

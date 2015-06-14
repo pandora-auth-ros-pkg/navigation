@@ -71,9 +71,21 @@ private:
    * static map are overwritten.
    */
   void incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map);
+  
+  /**
+   * @brief The callback to the update map topic.
+   * @param update A ptr to the map patch to update
+   * 
+   * Everytime a OccupancyGridUpdate map_msg is coming, this callback updates the map 
+   */
   void incomingUpdate(const map_msgs::OccupancyGridUpdateConstPtr& update);
   void reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level);
 
+  /**
+   * @brief 
+   * @param value
+   *
+   */
   unsigned char interpretValue(unsigned char value);
 
   std::string global_frame_; ///< @brief The global frame for the costmap

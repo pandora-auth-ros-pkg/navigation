@@ -49,6 +49,7 @@ void StaticLayer::onInitialize()
 
   ROS_INFO("Received a %d X %d map at %f m/pix", getSizeInCellsX(), getSizeInCellsY(), getResolution());
   
+  // if we enable map updates we subscribe to the update topic!
   if(subscribe_to_updates_)
   {
     ROS_INFO("Subscribing to updates");
@@ -85,6 +86,16 @@ void StaticLayer::matchSize()
             master->getOriginX(), master->getOriginY());
 }
 
+/*
+* @brief Interpret a cell cost to the corresponding typedef
+* 
+* If tracking unknown space is enabled and the value of the cell grid is equal to the unknown cost we
+* set through the "unknown_cost_value" parameter, the function returns NO_INFORMATION.
+* If the value of the cell grid is larger or equal to the "lethal_cost_threshold" parameter we set, 
+* the function returns LETHAL_OBSTACLE.
+* If we have set the "trinary_costmap" parameter to true the function returns FREE_SPACE. 
+* If "trinary_costmap" is false the function returns a scaled cost.
+*/
 unsigned char StaticLayer::interpretValue(unsigned char value)
 {
   //check if the static value is above the unknown or lethal thresholds
@@ -99,6 +110,13 @@ unsigned char StaticLayer::interpretValue(unsigned char value)
   return scale * LETHAL_OBSTACLE;
 }
 
+/*
+ * @ brief Callback to the map subscribed topic
+ * @ param new_map The new map to create the static layer from
+ *
+ * Resize the map layer to correspond to the new map we get and then sets the right
+ * values to the grid cells.
+ */
 void StaticLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
 {
   unsigned int size_x = new_map->info.width, size_y = new_map->info.height;
@@ -142,6 +160,7 @@ void StaticLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
   map_received_ = true;
   has_updated_data_ = true;
 }
+
 
 void StaticLayer::incomingUpdate(const map_msgs::OccupancyGridUpdateConstPtr& update)
 {
@@ -187,7 +206,8 @@ void StaticLayer::updateBounds(double robot_x, double robot_y, double robot_yaw,
     return;
 
   double mx, my;
-  
+  // convert from map coordinates to world coordinates
+  // x_, y_ are the map coordinates mx, my are the world coordinates
   mapToWorld(x_, y_, mx, my);
   *min_x = std::min(mx, *min_x);
   *min_y = std::min(my, *min_y);
