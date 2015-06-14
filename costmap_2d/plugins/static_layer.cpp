@@ -32,11 +32,18 @@ void StaticLayer::onInitialize()
   nh.param("unknown_cost_value", temp_unknown_cost_value, int(-1));
   nh.param("trinary_costmap", trinary_costmap_, true);
 
+  // Soft and hard obstacle topics
+  nh.param("soft_obstacles_topic", soft_obstacles_topic_, map_topic + "_soft_updates");
+  nh.param("hard_obstacles_topic", hard_obstacles_topic_, map_topic + "_hard_updates");
+
   lethal_threshold_ = std::max(std::min(temp_lethal_threshold, 100), 0);
   unknown_cost_value_ = temp_unknown_cost_value;
   //we'll subscribe to the latched topic that the map server uses
   ROS_INFO("Requesting the map...");
   map_sub_ = g_nh.subscribe(map_topic, 1, &StaticLayer::incomingMap, this);
+  
+  // These flags become true when we receive or update the map 
+  // and they become again false when we update the map's bounds
   map_received_ = false;
   has_updated_data_ = false;
 
@@ -52,8 +59,9 @@ void StaticLayer::onInitialize()
   // if we enable map updates we subscribe to the update topic!
   if(subscribe_to_updates_)
   {
-    ROS_INFO("Subscribing to updates");
-    map_update_sub_ = g_nh.subscribe(map_topic + "_updates", 10, &StaticLayer::incomingUpdate, this);
+    ROS_INFO("Subscribing to Soft and Hard obstacle updates");
+    map_soft_update_sub_ = g_nh.subscribe(soft_obstacles_topic_, 10, &StaticLayer::incomingSoftUpdate, this);
+    map_hard_update_sub_ = g_nh.subscribe(hard_obstacles_topic_, 10, &StaticLayer::incomingHardUpdate, this);
   }
 
   if(dsrv_)
@@ -162,7 +170,26 @@ void StaticLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
 }
 
 
-void StaticLayer::incomingUpdate(const map_msgs::OccupancyGridUpdateConstPtr& update)
+void StaticLayer::incomingSoftUpdate(const map_msgs::OccupancyGridUpdateConstPtr& update)
+{
+    unsigned int di = 0;
+    for (unsigned int y = 0; y < update->height ; y++)
+    {
+        unsigned int index_base = (update->y + y) * update->width;
+        for (unsigned int x = 0; x < update->width ; x++)
+        {
+            unsigned int index = index_base + x + update->x;
+            costmap_[index] = interpretValue( update->data[di++] );
+        }
+    }
+    x_ = update->x;
+    y_ = update->y;
+    width_ = update->width;
+    height_ = update->height;
+    has_updated_data_ = true;
+}
+
+void StaticLayer::incomingHardUpdate(const map_msgs::OccupancyGridUpdateConstPtr& update)
 {
     unsigned int di = 0;
     for (unsigned int y = 0; y < update->height ; y++)
@@ -190,7 +217,10 @@ void StaticLayer::deactivate()
 {
     map_sub_.shutdown();
     if (subscribe_to_updates_)
-        map_update_sub_.shutdown();
+    {
+      map_soft_update_sub_.shutdown();
+      map_hard_update_sub_.shutdown();
+    }
 }
 
 void StaticLayer::reset()

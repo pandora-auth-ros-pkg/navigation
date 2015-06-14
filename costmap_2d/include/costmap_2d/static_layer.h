@@ -72,14 +72,24 @@ private:
    */
   void incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map);
   
-  /**
-   * @brief The callback to the update map topic.
-   * @param update A ptr to the map patch to update
-   * 
-   * Everytime a OccupancyGridUpdate map_msg is coming, this callback updates the map 
-   */
-  void incomingUpdate(const map_msgs::OccupancyGridUpdateConstPtr& update);
+  
   void reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level);
+
+  /**
+   * @brief Callback to soft obstacles map update topic
+   * @param update A ptr to the map patch to update
+   *
+   * Everytime a OccupancyGridUpdate map_msg is coming, this callback updates the map
+   */
+  void incomingSoftUpdate(const map_msgs::OccupancyGridUpdateConstPtr& update);
+  
+  /**
+   * @brief Callback to hard obstacles map update topic
+   * @param update A ptr to the map patch to update
+   *
+   * Everytime a OccupancyGridUpdate map_msg is coming, this callback updates the map
+   */
+  void incomingHardUpdate(const map_msgs::OccupancyGridUpdateConstPtr& update);
 
   /**
    * @brief 
@@ -96,9 +106,15 @@ private:
   bool track_unknown_space_;
   bool use_maximum_;
   bool trinary_costmap_;
-  ros::Subscriber map_sub_, map_update_sub_;
+
+  // Map and map updates subscribers
+  ros::Subscriber map_sub_, map_soft_update_sub_, map_hard_update_sub_;
 
   unsigned char lethal_threshold_, unknown_cost_value_;
+
+  // Topic names
+  std::string soft_obstacles_topic_;
+  std::string hard_obstacles_topic_;
 
   mutable boost::recursive_mutex lock_;
   dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig> *dsrv_;
