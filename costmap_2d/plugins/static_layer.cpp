@@ -172,6 +172,7 @@ void StaticLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
 
 void StaticLayer::incomingSoftUpdate(const map_msgs::OccupancyGridUpdateConstPtr& update)
 {
+    ROS_ERROR("Reached soft obstacle Callback!!");
     unsigned int di = 0;
     for (unsigned int y = 0; y < update->height ; y++)
     {
@@ -191,6 +192,7 @@ void StaticLayer::incomingSoftUpdate(const map_msgs::OccupancyGridUpdateConstPtr
 
 void StaticLayer::incomingHardUpdate(const map_msgs::OccupancyGridUpdateConstPtr& update)
 {
+    ROS_ERROR("Reached hard obstacle Callback!!");
     unsigned int di = 0;
     for (unsigned int y = 0; y < update->height ; y++)
     {
