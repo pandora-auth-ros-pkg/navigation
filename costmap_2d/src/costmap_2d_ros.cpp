@@ -103,8 +103,24 @@ Costmap2DROS::Costmap2DROS(std::string name, tf::TransformListener& tf) :
   private_nh.param("track_unknown_space", track_unknown_space, false);
   private_nh.param("always_send_full_costmap", always_send_full_costmap, false);
 
+  int width, height;
+  double resolution, origin_x, origin_y;
+
+
   layered_costmap_ = new LayeredCostmap(global_frame_, rolling_window, track_unknown_space);
 
+  if(name == "local_costmap")
+  {  
+    private_nh.param("width", width, 10);
+    private_nh.param("height", height, 10);
+    private_nh.param("resolution", resolution, 0.05);
+    private_nh.param("origin_x", origin_x, 0.0);
+    private_nh.param("origin_y", origin_y, 0.0);
+
+    layered_costmap_->resizeMap((unsigned int)(width / resolution),
+                                  (unsigned int)(height / resolution), resolution, origin_x, origin_y);
+  }
+  
   if (!private_nh.hasParam("plugins"))
   {
     resetOldParameters(private_nh);

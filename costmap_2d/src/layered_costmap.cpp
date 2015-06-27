@@ -81,6 +81,8 @@ void LayeredCostmap::updateMap(double robot_x, double robot_y, double robot_yaw)
   // if we're using a rolling buffer costmap... we need to update the origin using the robot's position
   if (rolling_window_)
   {
+    // the map is moving so we need to update the origin
+    // each time we move the origin is moved to the left down side of the map
     double new_origin_x = robot_x - costmap_.getSizeInMetersX() / 2;
     double new_origin_y = robot_y - costmap_.getSizeInMetersY() / 2;
     costmap_.updateOrigin(new_origin_x, new_origin_y);
@@ -97,7 +99,7 @@ void LayeredCostmap::updateMap(double robot_x, double robot_y, double robot_yaw)
   {
     (*plugin)->updateBounds(robot_x, robot_y, robot_yaw, &minx_, &miny_, &maxx_, &maxy_);
   }
-
+  // x0,xn,y0,yn will take the map coordinates of the bounding box that define the costmap
   int x0, xn, y0, yn;
   costmap_.worldToMapEnforceBounds(minx_, miny_, x0, y0);
   costmap_.worldToMapEnforceBounds(maxx_, maxy_, xn, yn);

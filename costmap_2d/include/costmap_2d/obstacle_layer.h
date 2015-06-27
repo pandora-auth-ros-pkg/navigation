@@ -87,7 +87,7 @@ public:
     * @param message The message returned from a message notifier 
     * @param buffer A pointer to the observation buffer to update
     */
-   void laserScanValidInfCallback(const sensor_msgs::LaserScanConstPtr& message, 
+  void laserScanValidInfCallback(const sensor_msgs::LaserScanConstPtr& message, 
                                   const boost::shared_ptr<ObservationBuffer>& buffer);
 
   /**
