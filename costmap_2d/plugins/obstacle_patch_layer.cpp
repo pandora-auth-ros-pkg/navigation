@@ -194,8 +194,8 @@ void ObstaclePatchLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_
   // Check origin matching?????
 
   // Check if the resolution of the incoming map and the master grid is the same
-  ROS_WARN("This is the master's data: originX[%f] originY[%f] width[%d] height[%d] res[%f]",
-    master->getOriginX(), master->getOriginY(),master->getSizeInCellsX(),master->getSizeInCellsY(),master->getResolution());
+  //ROS_WARN("This is the master's data: originX[%f] originY[%f] width[%d] height[%d] res[%f]",
+    //master->getOriginX(), master->getOriginY(),master->getSizeInCellsX(),master->getSizeInCellsY(),master->getResolution());
 
   double res  = (ceilf(new_map->info.resolution * 100) / 100);
   if((ceilf(master->getResolution() * 100) / 100) != (ceilf(new_map->info.resolution * 100) / 100))
@@ -223,7 +223,7 @@ void ObstaclePatchLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_
   bounding_box_vect.push_back(map_minY);
   bounding_box_vect.push_back(map_maxY);
 
-  ROS_WARN("Created the new map bounding box in cells and store it to a vector");
+  //ROS_WARN("Created the new map bounding box in cells and store it to a vector");
   // Initially we check if the incoming map has any common points with the master grid
   // If there is an intersection, it is returned in the passed vector
   //bool intersects = mapIntersectsMaster(&bounding_box_vect);
@@ -238,7 +238,7 @@ void ObstaclePatchLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_
 
   unsigned int yBoundLow = master_minY - map_minY;
 
-  ROS_ERROR("xBoundLow: [%d], yBoundLow: [%d]",xBoundLow,yBoundLow );
+  //ROS_ERROR("xBoundLow: [%d], yBoundLow: [%d]",xBoundLow,yBoundLow );
   //yBoundHigh = master_maxY;
   unsigned char value;
   for (unsigned int i = 0; i < master->getSizeInCellsX(); ++i)
