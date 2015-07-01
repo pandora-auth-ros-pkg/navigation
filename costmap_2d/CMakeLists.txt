@@ -55,6 +55,7 @@ generate_dynamic_reconfigure_options(
   cfg/GenericPlugin.cfg
   cfg/InflationPlugin.cfg
   cfg/VoxelPlugin.cfg
+  cfg/RangeSensorLayer.cfg
 )
 
 catkin_package(
@@ -113,6 +114,7 @@ add_library(layers
   plugins/coverage_layer.cpp
   plugins/map_layer.cpp
   plugins/global_patch_layer.cpp
+  plugins/range_sensor_layer.cpp
   src/observation_buffer.cpp
 )
 target_link_libraries(layers
