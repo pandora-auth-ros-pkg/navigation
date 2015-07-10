@@ -110,60 +110,27 @@ void GlobalHardLayer::reset()
 }
 
 
-//void GlobalHardLayer::mapResizer(){}
+// void GlobalHardLayer::mapResizer(const boost::shared_ptr<nav_msgs::OccupancyGrid> input,
+// boost::shared_ptr<nav_msgs::OccupancyGrid> output)
+// {
+//   if(input.get() == NULL)
+//   {
+//     ROS_ERROR("[HardLayer] Input map not initialized");
+//     throw // Todo
+//   }
+//   output->
+// }
 
 void GlobalHardLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
 {
   // Pairnw to map kai to kanw resize
+  Costmap2D* master = layered_costmap_->getCostmap();
   boost::shared_ptr<nav_msgs::OccupancyGrid> map_copy(new nav_msgs::OccupancyGrid);
   *map_copy = *new_map;
 
-  // The master grid data
-  Costmap2D* master = layered_costmap_->getCostmap();
-  unsigned int sizeX = master->getSizeInCellsX();  // [cells]
-  unsigned int sizeY = master->getSizeInCellsY();  // [cells]
-  float res = master->getResolution();  // [m/cell]
-  float origX = master->getOriginX();  // [m]
-  float origY = master->getOriginY();  // [m]
-
-  // The difference of origins in meters
-  float xDiff = new_map->info.origin.position.x - origX;  // [m]
-  float yDiff = new_map->info.origin.position.y - origY;  // [m]
-
-  // The differenceof origins in cells
-  unsigned int xDiffCells = static_cast<unsigned int>(xDiff / res)+1;
-  unsigned int yDiffCells = static_cast<unsigned int>(yDiff / res)+1;
-
-  // Set the MapMetaData of the master grid to the map_copy
-  map_copy->info.width = sizeX;
-  map_copy->info.height = sizeY;
-  map_copy->info.resolution = res;
-  map_copy->info.origin.position.x = origX;
-  map_copy->info.origin.position.y = origY;
-
-  // A temporary array with the size of the master, containing NO_INFO
-  std::vector<signed char> temp_arr(sizeX * sizeY, 51);
-
-  unsigned int it = 0;
-
-  for(unsigned int ii=0; ii<new_map->info.width; ii++)
-  {
-    for(unsigned int jj=0; jj<new_map->info.height; jj++)
-    {
-      temp_arr[jj + ii * new_map->info.width] = new_map->data[jj + ii * new_map->info.width];
-      //++it;
-    }
-  }
-  map_copy->data = temp_arr;
-  ROS_INFO("Map copy Width: %d,  Height: %d", map_copy->info.width, map_copy->info.height);
-  //mapResizer(*map_copy, sizeX, sizeY, res, origX, origY);
-
-  unsigned int size_x = map_copy->info.width, size_y = map_copy->info.height;
-
-  ROS_DEBUG("Received a %d X %d map at %f m/pix", size_x, size_y, map_copy->info.resolution);
-
   // resize costmap if size, resolution or origin do not match
   //Costmap2D* master = layered_costmap_->getCostmap();
+  unsigned int size_x = map_copy->info.width, size_y = map_copy->info.height;
   if (master->getSizeInCellsX() != size_x ||
       master->getSizeInCellsY() != size_y ||
       master->getResolution() != map_copy->info.resolution ||
@@ -171,9 +138,54 @@ void GlobalHardLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map
       master->getOriginY() != map_copy->info.origin.position.y ||
       !layered_costmap_->isSizeLocked())
   {
+    // The master grid data
+    ROS_INFO("YOOOO");
+    unsigned int sizeX = master->getSizeInCellsX();  // [cells]
+    unsigned int sizeY = master->getSizeInCellsY();  // [cells]
+    float res = master->getResolution();  // [m/cell]
+    float origX = master->getOriginX();  // [m]
+    float origY = master->getOriginY();  // [m]
+
+    // The difference of origins in meters
+    float xDiff = new_map->info.origin.position.x - origX;  // [m]
+    float yDiff = new_map->info.origin.position.y - origY;  // [m]
+
+    // The differenceof origins in cells
+    unsigned int xDiffCells = static_cast<unsigned int>(xDiff / res)+1;
+    unsigned int yDiffCells = static_cast<unsigned int>(yDiff / res)+1;
+
+    // Set the MapMetaData of the master grid to the map_copy
+    map_copy->info.width = sizeX;
+    map_copy->info.height = sizeY;
+    map_copy->info.resolution = res;
+    map_copy->info.origin.position.x = origX;
+    map_copy->info.origin.position.y = origY;
+
+    // A temporary array with the size of the master, containing NO_INFO
+    std::vector<signed char> temp_arr(sizeX * sizeY, 51);
+
+    unsigned int it = 0;
+
+    for(unsigned int ii=0; ii<new_map->info.width; ii++)
+    {
+      for(unsigned int jj=0; jj<new_map->info.height; jj++)
+      {
+        temp_arr[jj + ii * new_map->info.width] = new_map->data[jj + ii * new_map->info.width];
+        //++it;
+      }
+    }
+    map_copy->data = temp_arr;
+    ROS_INFO("Map copy Width: %d,  Height: %d", map_copy->info.width, map_copy->info.height);
+    //mapResizer(*map_copy, sizeX, sizeY, res, origX, origY);
+
+
+
+    ROS_DEBUG("Received a %d X %d map at %f m/pix", size_x, size_y, map_copy->info.resolution);
+
+
     ROS_INFO("[HardLayer]Resizing costmap to %d X %d at %f m/pix", size_x, size_y, map_copy->info.resolution);
-    layered_costmap_->resizeMap(size_x, size_y, map_copy->info.resolution, map_copy->info.origin.position.x,
-                               map_copy->info.origin.position.y, true);
+    //layered_costmap_->resizeMap(size_x, size_y, map_copy->info.resolution, map_copy->info.origin.position.x,
+    //                           map_copy->info.origin.position.y, true);
   }else if(size_x_ != size_x || size_y_ != size_y ||
       resolution_ != map_copy->info.resolution ||
       origin_x_ != map_copy->info.origin.position.x ||
