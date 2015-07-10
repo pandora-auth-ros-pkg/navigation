@@ -1,7 +1,7 @@
-#include <costmap_2d/obstacle_patch_layer.h>
+#include <costmap_2d/soft_patch_layer.h>
 #include <pluginlib/class_list_macros.h>
 
-PLUGINLIB_EXPORT_CLASS(costmap_2d::ObstaclePatchLayer, costmap_2d::Layer)
+PLUGINLIB_EXPORT_CLASS(costmap_2d::SoftPatchLayer, costmap_2d::Layer)
 
 using costmap_2d::LETHAL_OBSTACLE;
 using costmap_2d::NO_INFORMATION;
@@ -10,9 +10,9 @@ using costmap_2d::FREE_SPACE;
 namespace costmap_2d
 {
 
-ObstaclePatchLayer::ObstaclePatchLayer() :dsrv_(NULL) {}
+SoftPatchLayer::SoftPatchLayer() :dsrv_(NULL) {}
 
-void ObstaclePatchLayer::onInitialize()
+void SoftPatchLayer::onInitialize()
 {
   ros::NodeHandle nh("~/" + name_), g_nh;
   current_ = true;
@@ -32,7 +32,7 @@ void ObstaclePatchLayer::onInitialize()
 
   //we'll subscribe to the latched topic that the map server uses
   ROS_INFO("Requesting the map...");
-  map_sub_ = g_nh.subscribe(map_topic, 1, &ObstaclePatchLayer::incomingMap, this);
+  map_sub_ = g_nh.subscribe(map_topic, 1, &SoftPatchLayer::incomingMap, this);
   map_received_ = false;
   has_updated_data_ = false;
 
@@ -52,13 +52,13 @@ void ObstaclePatchLayer::onInitialize()
 
   dsrv_ = new dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>(nh);
   dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>::CallbackType cb = boost::bind(
-      &ObstaclePatchLayer::reconfigureCB, this, _1, _2);
+      &SoftPatchLayer::reconfigureCB, this, _1, _2);
   dsrv_->setCallback(cb);
 }
 
 
 
-void ObstaclePatchLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y,
+void SoftPatchLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y,
                                         double* max_x, double* max_y)
 {
   if (!map_received_ || !has_updated_data_)
@@ -79,7 +79,7 @@ void ObstaclePatchLayer::updateBounds(double robot_x, double robot_y, double rob
 
 }
 
-void ObstaclePatchLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j)
+void SoftPatchLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j)
 {
   if (!map_received_)
     return;
@@ -87,24 +87,24 @@ void ObstaclePatchLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min
   updateWithOverwrite(master_grid, min_i, min_j, max_i, max_j);
 }
 
-void ObstaclePatchLayer::matchSize()
+void SoftPatchLayer::matchSize()
 {
   Costmap2D* master = layered_costmap_->getCostmap();
   resizeMap(master->getSizeInCellsX(), master->getSizeInCellsY(), master->getResolution(),
             master->getOriginX(), master->getOriginY());
 }
 
-void ObstaclePatchLayer::activate()
+void SoftPatchLayer::activate()
 {
     onInitialize();
 }
 
-void ObstaclePatchLayer::deactivate()
+void SoftPatchLayer::deactivate()
 {
     map_sub_.shutdown();
 }
 
-void ObstaclePatchLayer::reset()
+void SoftPatchLayer::reset()
 {
     deactivate();
     activate();
@@ -125,7 +125,7 @@ void ObstaclePatchLayer::reset()
  * intersects the master_grid. If there is a section between those two, the arguments we passed by pointer
  * are going to be filled with the bounding box that defines the SECTION between the two maps.
  */
-bool ObstaclePatchLayer::mapIntersectsMaster(std::vector<unsigned int>* bounding_box)
+bool SoftPatchLayer::mapIntersectsMaster(std::vector<unsigned int>* bounding_box)
 {
   Costmap2D* master = layered_costmap_->getCostmap();
   if(master == NULL)
@@ -186,7 +186,7 @@ bool ObstaclePatchLayer::mapIntersectsMaster(std::vector<unsigned int>* bounding
 }
 
 
-void ObstaclePatchLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
+void SoftPatchLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
 {
   // A pointer to the master_grid
   Costmap2D* master = layered_costmap_->getCostmap();
@@ -286,7 +286,7 @@ void ObstaclePatchLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_
 
 }
 
-unsigned char ObstaclePatchLayer::interpretValue(unsigned char value)
+unsigned char SoftPatchLayer::interpretValue(unsigned char value)
 {
   //check if the static value is above the unknown or lethal thresholds
   if (value == unknown_cost_value_)
@@ -301,7 +301,7 @@ unsigned char ObstaclePatchLayer::interpretValue(unsigned char value)
 }
 
 
-void ObstaclePatchLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level)
+void SoftPatchLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level)
 {
   enabled_ = config.enabled;
 }

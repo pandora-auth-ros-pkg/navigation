@@ -44,8 +44,8 @@ PLUGINLIB_DECLARE_CLASS(clear_costmap_recovery, ClearCostmapRecovery, clear_cost
 using costmap_2d::NO_INFORMATION;
 
 namespace clear_costmap_recovery {
-ClearCostmapRecovery::ClearCostmapRecovery(): global_costmap_(NULL), local_costmap_(NULL), 
-  tf_(NULL), initialized_(false) {} 
+ClearCostmapRecovery::ClearCostmapRecovery(): global_costmap_(NULL), local_costmap_(NULL),
+  tf_(NULL), initialized_(false) {}
 
 void ClearCostmapRecovery::initialize(std::string name, tf::TransformListener* tf,
     costmap_2d::Costmap2DROS* global_costmap, costmap_2d::Costmap2DROS* local_costmap){
@@ -60,6 +60,8 @@ void ClearCostmapRecovery::initialize(std::string name, tf::TransformListener* t
 
     private_nh.param("reset_distance", reset_distance_, 3.0);
     private_nh.param("layer_search_string", layer_search_string_, std::string("obstacle"));
+    // For debugging
+    // ROS_ERROR("layer_search_string name is: %s", layer_search_string_.c_str());
 
     initialized_ = true;
   }
@@ -80,6 +82,7 @@ void ClearCostmapRecovery::runBehavior(){
   }
   ROS_WARN("Clearing costmap to unstuck robot.");
   clear(global_costmap_);
+  ROS_ERROR("cleared global costmap!");
   clear(local_costmap_);
 }
 
@@ -115,10 +118,10 @@ void ClearCostmapRecovery::clear(costmap_2d::Costmap2DROS* costmap){
 }
 
 
-void ClearCostmapRecovery::clearMap(boost::shared_ptr<costmap_2d::ObstacleLayer> costmap, 
+void ClearCostmapRecovery::clearMap(boost::shared_ptr<costmap_2d::ObstacleLayer> costmap,
                                         double pose_x, double pose_y){
   boost::unique_lock< boost::shared_mutex > lock(*(costmap->getLock()));
- 
+
   // world coordinates
   double start_point_x = pose_x - reset_distance_ / 2;
   double start_point_y = pose_y - reset_distance_ / 2;
@@ -127,15 +130,15 @@ void ClearCostmapRecovery::clearMap(boost::shared_ptr<costmap_2d::ObstacleLayer>
 
   // map coordinates
   int start_x, start_y, end_x, end_y;
-  
-  // Converts world coordinates to map coordinates 
+
+  // Converts world coordinates to map coordinates
   costmap->worldToMapNoBounds(start_point_x, start_point_y, start_x, start_y);
   costmap->worldToMapNoBounds(end_point_x, end_point_y, end_x, end_y);
 
   unsigned char* grid = costmap->getCharMap();
   for(int x=0; x<(int)costmap->getSizeInCellsX(); x++){
     bool xrange = x>start_x && x<end_x;
-                   
+
     for(int y=0; y<(int)costmap->getSizeInCellsY(); y++){
       if(xrange && y>start_y && y<end_y)
         continue;
@@ -149,6 +152,8 @@ void ClearCostmapRecovery::clearMap(boost::shared_ptr<costmap_2d::ObstacleLayer>
   double ox = costmap->getOriginX(), oy = costmap->getOriginY();
   double width = costmap->getSizeInMetersX(), height = costmap->getSizeInMetersY();
   costmap->setResetBounds(ox, ox + width, oy, oy + height);
+  // Here it crashes (after return) when you use a plugin layer with the name
+  // Obstacle and it's not of type obstacle layer
   return;
 }
 

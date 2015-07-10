@@ -23,7 +23,7 @@ void StaticLayer::onInitialize()
   std::string map_topic;
   nh.param("map_topic", map_topic, std::string("map"));
   nh.param("subscribe_to_updates", subscribe_to_updates_, false);
-  
+
   nh.param("track_unknown_space", track_unknown_space_, true);
   nh.param("use_maximum", use_maximum_, false);
 
@@ -48,7 +48,7 @@ void StaticLayer::onInitialize()
   }
 
   ROS_INFO("Received a %d X %d map at %f m/pix", getSizeInCellsX(), getSizeInCellsY(), getResolution());
-  
+
   // if we enable map updates we subscribe to the update topic!
   if(subscribe_to_updates_)
   {
@@ -88,12 +88,12 @@ void StaticLayer::matchSize()
 
 /*
 * @brief Interpret a cell cost to the corresponding typedef
-* 
+*
 * If tracking unknown space is enabled and the value of the cell grid is equal to the unknown cost we
 * set through the "unknown_cost_value" parameter, the function returns NO_INFORMATION.
-* If the value of the cell grid is larger or equal to the "lethal_cost_threshold" parameter we set, 
+* If the value of the cell grid is larger or equal to the "lethal_cost_threshold" parameter we set,
 * the function returns LETHAL_OBSTACLE.
-* If we have set the "trinary_costmap" parameter to true the function returns FREE_SPACE. 
+* If we have set the "trinary_costmap" parameter to true the function returns FREE_SPACE.
 * If "trinary_costmap" is false the function returns a scaled cost.
 */
 unsigned char StaticLayer::interpretValue(unsigned char value)
@@ -132,7 +132,7 @@ void StaticLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
       master->getOriginY() != new_map->info.origin.position.y ||
       !layered_costmap_->isSizeLocked())
   {
-    ROS_INFO("Resizing costmap to %d X %d at %f m/pix", size_x, size_y, new_map->info.resolution);
+    ROS_INFO("[Static Layer]Resizing costmap to %d X %d at %f m/pix", size_x, size_y, new_map->info.resolution);
     layered_costmap_->resizeMap(size_x, size_y, new_map->info.resolution, new_map->info.origin.position.x,
                                 new_map->info.origin.position.y, true);
   }else if(size_x_ != size_x || size_y_ != size_y ||
@@ -211,11 +211,11 @@ void StaticLayer::updateBounds(double robot_x, double robot_y, double robot_yaw,
   mapToWorld(x_, y_, mx, my);
   *min_x = std::min(mx, *min_x);
   *min_y = std::min(my, *min_y);
-  
+
   mapToWorld(x_ + width_, y_ + height_, mx, my);
   *max_x = std::max(mx, *max_x);
   *max_y = std::max(my, *max_y);
-  
+
   has_updated_data_ = false;
 
 }

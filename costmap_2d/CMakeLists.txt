@@ -109,12 +109,13 @@ add_library(layers
   plugins/inflation_layer.cpp
   plugins/obstacle_layer.cpp
   plugins/static_layer.cpp
-  plugins/obstacle_patch_layer.cpp
+  plugins/soft_patch_layer.cpp
   plugins/voxel_layer.cpp
   plugins/coverage_layer.cpp
   plugins/map_layer.cpp
   plugins/global_patch_layer.cpp
   plugins/range_sensor_layer.cpp
+  plugins/global_hard_layer.cpp
   src/observation_buffer.cpp
 )
 target_link_libraries(layers

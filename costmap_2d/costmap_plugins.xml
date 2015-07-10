@@ -9,6 +9,9 @@
     <class type="costmap_2d::GlobalPatchLayer"  base_class_type="costmap_2d::Layer">
       <description>A layer implemented for the needs of patching the global costmap.</description>
     </class>
+    <class type="costmap_2d::GlobalHardLayer"  base_class_type="costmap_2d::Layer">
+      <description>A layer implemented for the needs of patching the global costmap.</description>
+    </class>
     <class type="costmap_2d::MapLayer"  base_class_type="costmap_2d::Layer">
       <description>Clears the area in the costmap under the footprint of the robot.</description>
     </class>
@@ -21,7 +24,7 @@
     <class type="costmap_2d::ObstacleLayer"   base_class_type="costmap_2d::Layer">
       <description>Listens to laser scan and point cloud messages and marks and clears grid cells.</description>
     </class>
-    <class type="costmap_2d::ObstaclePatchLayer"   base_class_type="costmap_2d::Layer">
+    <class type="costmap_2d::SoftPatchLayer"   base_class_type="costmap_2d::Layer">
       <description>A layer implemented for the needs of patching the local costmap.</description>
     </class>
     <class type="costmap_2d::StaticLayer"     base_class_type="costmap_2d::Layer">
