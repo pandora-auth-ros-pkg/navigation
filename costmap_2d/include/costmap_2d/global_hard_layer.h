@@ -1,5 +1,5 @@
-#ifndef OBSTACLE_PATCH_LAYER_H_
-#define OBSTACLE_PATCH_LAYER_H_
+#ifndef GLOBAL_HARD_LAYER_H_
+#define GLOBAL_HARD_LAYER_H_
 #include <ros/ros.h>
 #include <costmap_2d/costmap_layer.h>
 #include <costmap_2d/layered_costmap.h>
@@ -10,10 +10,10 @@
 namespace costmap_2d
 {
 
-class ObstaclePatchLayer : public CostmapLayer
+class GlobalHardLayer : public CostmapLayer
 {
 public:
-  ObstaclePatchLayer();
+  GlobalHardLayer();
 
   virtual void onInitialize();
   virtual void updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x, double* min_y, double* max_x,
@@ -37,8 +37,6 @@ private:
 
   unsigned char interpretValue(unsigned char value);
 
-  bool mapIntersectsMaster(std::vector<unsigned int>* bounding_box);
-
   void reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level);
 
   dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig> *dsrv_;
@@ -49,11 +47,10 @@ private:
   unsigned int x_,y_,width_,height_;
   bool trinary_costmap_;
   ros::Subscriber map_sub_;
-
   unsigned char lethal_threshold_, unknown_cost_value_;
 
   mutable boost::recursive_mutex lock_;
 
 };
-}
-#endif
+}  // namespace costmap_2d
+#endif  // GLOBAL_PATCH_LAYER_H_
