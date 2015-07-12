@@ -109,6 +109,7 @@ Costmap2DROS::Costmap2DROS(std::string name, tf::TransformListener& tf) :
 
   layered_costmap_ = new LayeredCostmap(global_frame_, rolling_window, track_unknown_space);
 
+  /* Added by dimkirts */
   if(name == "local_costmap")
   {  
     private_nh.param("width", width, 10);
@@ -116,10 +117,11 @@ Costmap2DROS::Costmap2DROS(std::string name, tf::TransformListener& tf) :
     private_nh.param("resolution", resolution, 0.05);
     private_nh.param("origin_x", origin_x, 0.0);
     private_nh.param("origin_y", origin_y, 0.0);
-
+    // Edw mhpws xreiazetai na kanw resize kai me to size locked, des reconfigure callback
     layered_costmap_->resizeMap((unsigned int)(width / resolution),
                                   (unsigned int)(height / resolution), resolution, origin_x, origin_y);
   }
+  /* end */ 
   
   if (!private_nh.hasParam("plugins"))
   {

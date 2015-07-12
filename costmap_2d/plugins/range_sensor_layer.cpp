@@ -398,6 +398,7 @@ void RangeSensorLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i
   unsigned int span = master_grid.getSizeInCellsX();
   unsigned char clear = to_cost(clear_threshold_), mark = to_cost(mark_threshold_);
 
+  
   for (int j = min_j; j < max_j; j++)
   {
     unsigned int it = j * span + min_i;
@@ -408,7 +409,7 @@ void RangeSensorLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i
       if(prob>mark)
         current = costmap_2d::LETHAL_OBSTACLE;
       else if(prob<clear)
-        current = costmap_2d::FREE_SPACE;
+        current = costmap_2d::FREE_SPACE;  // FREE_SPACE
       else{
         it++;
         continue;
@@ -421,6 +422,15 @@ void RangeSensorLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i
       it++;
     }
   }
+  // Clean garbage
+  // for (int j = min_j; j < max_j; j++)
+  // {
+  //   unsigned int it = j * span + min_i;
+  //   for (int i = min_i; i < max_i; i++)
+  //   {
+  //     costmap_[it] = default_value_;
+  //   }
+  // }
 
   buffered_readings_ = 0;
   current_ = true;

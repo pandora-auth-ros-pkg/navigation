@@ -63,6 +63,11 @@ LayeredCostmap::~LayeredCostmap()
   }
 }
 
+/*
+* H resizeMap auth kanei resize ton master pou krataei o layered kai meta match ena ena ta layers(dld resize kai init stis
+* default times), h klhsh ths resizeMap mesa ston layered xwris to orisma size_locked kalei thn resize tou costmap2D kai
+* kanei resize mono ton master(kai init sth default timh)
+*/
 void LayeredCostmap::resizeMap(unsigned int size_x, unsigned int size_y, double resolution, double origin_x,
                                double origin_y, bool size_locked)
 {
