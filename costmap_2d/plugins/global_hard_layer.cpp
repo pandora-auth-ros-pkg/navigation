@@ -20,8 +20,8 @@ void GlobalHardLayer::onInitialize()
 
   global_frame_ = layered_costmap_->getGlobalFrameID();
 
-  std::string map_topic;
-  nh.param("map_topic", map_topic, std::string("map"));
+  std::string slamMapTopic;
+  nh.param("slam_topic", slamMapTopic, std::string("/slam/map"));
 
 
   nh.param("track_unknown_space", track_unknown_space_, true);
@@ -36,7 +36,7 @@ void GlobalHardLayer::onInitialize()
   unknown_cost_value_ = temp_unknown_cost_value;
   //we'll subscribe to the latched topic that the map server uses
   ROS_INFO("Requesting the map...");
-  map_sub_ = g_nh.subscribe(map_topic, 1, &GlobalHardLayer::incomingMap, this);
+  slamMapSub_ = g_nh.subscribe(slamMapTopic, 1, &GlobalHardLayer::slamCB, this);
   map_received_ = false;
   has_updated_data_ = false;
 
@@ -101,56 +101,88 @@ unsigned char GlobalHardLayer::interpretValue(unsigned char value)
 
 }
 
-/*
- * @ brief Callback to the map subscribed topic
- * @ param new_map The new map to create the static layer from
- *
- * Resize the map layer to correspond to the new map we get and then sets the right
- * values to the grid cells.
- */
-void GlobalHardLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
+void GlobalHardLayer::innerCostmapUpdate(const nav_msgs::OccupancyGridConstPtr& new_map)
 {
-  unsigned int size_x = new_map->info.width, size_y = new_map->info.height;
-
-  ROS_DEBUG("Received a %d X %d map at %f m/pix", size_x, size_y, new_map->info.resolution);
-
-  // resize costmap if size, resolution or origin do not match
-  Costmap2D* master = layered_costmap_->getCostmap();
-  if (master->getSizeInCellsX() != size_x ||
-      master->getSizeInCellsY() != size_y ||
-      master->getResolution() != new_map->info.resolution ||
-      master->getOriginX() != new_map->info.origin.position.x ||
-      master->getOriginY() != new_map->info.origin.position.y ||
-      !layered_costmap_->isSizeLocked())
+  int it = 0;
+  for (int j = 0; j < new_map->info.width; j++)
   {
-    ROS_INFO("[Static Layer]Resizing costmap to %d X %d at %f m/pix", size_x, size_y, new_map->info.resolution);
-    layered_costmap_->resizeMap(size_x, size_y, new_map->info.resolution, new_map->info.origin.position.x,
-                                new_map->info.origin.position.y, true);
-  }else if(size_x_ != size_x || size_y_ != size_y ||
-      resolution_ != new_map->info.resolution ||
-      origin_x_ != new_map->info.origin.position.x ||
-      origin_y_ != new_map->info.origin.position.y){
-    matchSize();
-  }
-
-  unsigned int index = 0;
-
-  //initialize the costmap with static data
-  for (unsigned int i = 0; i < size_y; ++i)
-  {
-    for (unsigned int j = 0; j < size_x; ++j)
+    for (int i = 0; i < new_map->info.height; i++)
     {
-      unsigned char value = new_map->data[index];
-      costmap_[index] = interpretValue(value);
-      ++index;
+      if (costmap_[it] != NO_INFORMATION && costmap_[it] != FREE_SPACE && costmap_[it] != LETHAL_OBSTACLE)
+      {
+        unsigned char x = costmap_[it];
+        ROS_ERROR_THROTTLE(100,"%u",costmap_[it]);
+        ROS_ERROR_COND(x == 255, "Shieet 255");
+        ROS_ERROR_COND(x == 0, "MPOUTSA 0");
+        ROS_ERROR_COND(x == 254, "SKATA 254");
+        costmap_[it] = NO_INFORMATION;
+      }
+      //printf("Incoming %d \n", new_map->data[it]);
+      //printf("Costmap before ---------------------  %u \n", costmap_[it]);
+      if (new_map->data[it] != 51)
+        costmap_[it] = interpretValue(new_map->data[it]);
+      //printf("Costmap after ------------------------------------------  %u \n", costmap_[it]);
+      it++;
     }
+
   }
+}
+
+// Callback to slam map
+void GlobalHardLayer::slamCB(const nav_msgs::OccupancyGridConstPtr& slamMap)
+{
+  unsigned int slamWidth = slamMap->info.width;
+  unsigned int slamHeight = slamMap->info.height;
+  double slamOrgX = slamMap->info.origin.position.x;
+  double slamOrgY = slamMap->info.origin.position.y;
+  double slamRes = slamMap->info.resolution;
+
+  // For the first time we get slam, so that elevationMap wont write in an
+  // empty buffer.
+  if (!map_received_)
+  {
+    ROS_INFO("slamCB first slam");
+    bufferCostmap_->info.width = slamWidth;
+    bufferCostmap_->info.height = slamHeight;
+    bufferCostmap_->info.origin.position.x = slamOrgX;
+    bufferCostmap_->info.origin.position.y = slamOrgY;
+    bufferCostmap_->info.resolution = slamRes;
+    bufferCostmap_->data.resize(slamWidth*slamHeight);
+    ROS_INFO("slamCB after copying to buffer slam");
+    int it = 0;
+    for(int i=0; i<=slamWidth; i++)
+    {
+      for(int j=0; j<=slamHeight; j++)
+      {
+        bufferCostmap_->data[it] = 51;  // to param
+        it++;
+      }
+    }
+    ROS_INFO("slamCB after copying to before true");
+
+    ROS_INFO("slamCB buffer setted correctly");
+  }
+
+  if (bufferCostmap_->info.width != slamWidth ||
+      bufferCostmap_->info.height != slamHeight ||
+      bufferCostmap_->info.origin.position.x != slamOrgX  ||
+      bufferCostmap_->info.origin.position.y != slamOrgY ||
+      bufferCostmap_->info.resolution != slamRes
+  )
+  {
+    ROS_INFO("slamCB align slam with buffer");
+    // Change MapMetaData and values in bufferCostmap
+    alignWithNewMap(slamMap, bufferCostmap_);
+  }
+
+  innerCostmapUpdate(bufferCostmap_);
   x_ = y_ = 0;
   width_ = size_x_;
   height_ = size_y_;
   map_received_ = true;
   has_updated_data_ = true;
 }
+
 
 
 void GlobalHardLayer::activate()
@@ -160,7 +192,7 @@ void GlobalHardLayer::activate()
 
 void GlobalHardLayer::deactivate()
 {
-    map_sub_.shutdown();
+    slamMapSub_.shutdown();
 }
 
 void GlobalHardLayer::reset()

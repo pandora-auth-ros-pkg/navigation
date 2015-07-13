@@ -65,20 +65,24 @@ public:
 
 private:
   void reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level);
-  void incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map);
+
+  void slamCB(const nav_msgs::OccupancyGridConstPtr& slamMap);
+
+
   /**
    * @brief
    * @param value
    *
    */
   unsigned char interpretValue(unsigned char value);
+  void innerCostmapUpdate(const nav_msgs::OccupancyGridConstPtr& new_map);
 
   void alignWithNewMap(const nav_msgs::OccupancyGridConstPtr& in,
       const nav_msgs::OccupancyGridPtr& out);
 
   void mapDilation(const nav_msgs::OccupancyGridPtr& in, int steps, int coords,
               nav_msgs::OccupancyGridConstPtr checkMap = nav_msgs::OccupancyGridPtr());
-              
+
   std::string global_frame_; ///< @brief The global frame for the costmap
 
   bool map_received_;
@@ -87,7 +91,8 @@ private:
   bool track_unknown_space_;
 
 
-  ros::Subscriber map_sub_;
+  ros::Subscriber slamMapSub_;
+  nav_msgs::OccupancyGridPtr bufferCostmap_;
 
   unsigned char lethal_threshold_, unknown_cost_value_;
 
