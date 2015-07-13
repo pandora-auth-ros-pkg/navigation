@@ -19,8 +19,16 @@ void GlobalHardLayer::onInitialize()
   current_ = true;
   global_frame_ = layered_costmap_->getGlobalFrameID();
 
-  std::string map_topic;
-  nh.param("map_topic", map_topic, std::string("map"));
+  //std::string map_topic;
+  //nh.param("map_topic", map_topic, std::string("map"));
+  // My topics
+  std::string slamMapTopic;
+  std::string elevationMapTopic;
+  nh.param("slam_topic", slamMapTopic, "/slam/map");
+  nh.param("elevation_map_topic", elevationMapTopic, "/vision/traversability_map");
+
+  slamMapSub = g_nh.subscribe(slamMapTopic, 1, &GlobalHardLayer::slamCB, this);
+  elevationMapSub = g_nh.subscribe(elevationMapTopic, 1, &GlobalHardLayer::elevationMapCB, this);
 
   int temp_lethal_threshold, temp_unknown_cost_value;
   nh.param("lethal_cost_threshold", temp_lethal_threshold, int(100));
@@ -134,7 +142,7 @@ void GlobalHardLayer::innerCostmapUpdate(const nav_msgs::OccupancyGridConstPtr& 
     for (int i = 0; i < new_map->info.height; i++)
     {
       if (costmap_[it] != NO_INFORMATION && costmap_[it] != FREE_SPACE && costmap_[it] != LETHAL_OBSTACLE)
-      {  
+      {
         unsigned char x = costmap_[it];
         ROS_ERROR_THROTTLE(100,"%u",costmap_[it]);
         ROS_ERROR_COND(x == 255, "Shieet 255");
@@ -156,17 +164,17 @@ void GlobalHardLayer::innerCostmapUpdate(const nav_msgs::OccupancyGridConstPtr& 
 void GlobalHardLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
 {
   unsigned int size_x = new_map->info.width, size_y = new_map->info.height;
-  
+
   Costmap2D* master = layered_costmap_->getCostmap();
-  
+
   unsigned int master_size_x = master->getSizeInCellsX();
   unsigned int master_size_y = master->getSizeInCellsY();
   double master_origin_x = master->getOriginX();
   double master_origin_y = master->getOriginY();
-  
+
   ROS_INFO("[Debug Hard]Received a %d X %d map at %f m/pix", size_x, size_y, new_map->info.resolution);
-  ROS_ERROR("size_x of costmap[%d] size_y of costmap[%d]",size_x_,size_y_);
-  
+  ROS_INFO("size_x of costmap[%d] size_y of costmap[%d]",size_x_,size_y_);
+
   if(master->getSizeInCellsX() != size_x ||
       master->getSizeInCellsY() != size_y ||
       master->getResolution() != new_map->info.resolution ||
@@ -201,12 +209,44 @@ void GlobalHardLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map
   //     ++index;
   //   }
   // }
-  
+
   x_ = y_ = 0;
   width_ = size_x_;
   height_ = size_y_;
   map_received_ = true;
   has_updated_data_ = true;
+
+}
+
+// Callback to slam map
+void GlobalHardLayer::slamCB(const nav_msgs::OccupancyGridConstPtr& slamMap)
+{
+  if (bufferCostmap_.getSizeInCellsX() != slamMap->info.width ||
+      bufferCostmap_.getSizeInCellsY() != slamMap->info.height ||
+      bufferCostmap_.getOriginX() != slamMap->info.origin.position.x ||
+      bufferCostmap_.getOriginY() != slamMap->info.origin.position.y ||
+      bufferCostmap_.getResolution() != slamMap->info.resolution
+  )
+  {
+    bu
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+// Callback to vision traversability map
+void GlobalHardLayer::elevationMapCB(const nav_msgs::OccupancyGridConstPtr& elevationMap)
+{
 
 }
 

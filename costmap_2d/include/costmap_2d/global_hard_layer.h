@@ -49,6 +49,10 @@ private:
   bool trinary_costmap_;
   ros::Subscriber map_sub_;
   unsigned char lethal_threshold_, unknown_cost_value_;
+  // Subscribers to OUR fucking topics :P
+  ros::Subscriber slamMapSub_;
+  ros::Subscriber elevationMapSub_;
+  Costmap2D bufferCostmap_;
 
   mutable boost::recursive_mutex lock_;
 
