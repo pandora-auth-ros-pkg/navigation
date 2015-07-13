@@ -34,7 +34,8 @@ private:
    * static map are overwritten.
    */
   void incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map);
-
+  void innerCostmapUpdate(const nav_msgs::OccupancyGridConstPtr& new_map);
+  //unsigned char interpretValueInd(unsigned char value, unsigned int indx);
   unsigned char interpretValue(unsigned char value);
 
   void reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level);

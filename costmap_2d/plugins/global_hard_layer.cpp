@@ -1,5 +1,6 @@
 #include <costmap_2d/global_hard_layer.h>
 #include <pluginlib/class_list_macros.h>
+#include <ros/console.h>
 
 PLUGINLIB_EXPORT_CLASS(costmap_2d::GlobalHardLayer, costmap_2d::Layer)
 
@@ -83,11 +84,12 @@ void GlobalHardLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i,
   if (!map_received_)
     return;
 
-  updateWithMax(master_grid, min_i, min_j, max_i, max_j);
+  updateWithOverwrite(master_grid, min_i, min_j, max_i, max_j);
 }
 
 void GlobalHardLayer::matchSize()
 {
+  ROS_ERROR("[Hard Layer] Kanw matching");
   Costmap2D* master = layered_costmap_->getCostmap();
   resizeMap(master->getSizeInCellsX(), master->getSizeInCellsY(), master->getResolution(),
             master->getOriginX(), master->getOriginY());
@@ -121,121 +123,121 @@ void GlobalHardLayer::reset()
 //   output->
 // }
 
+/*
+* Paragkaaaaaaaaaaaaaaaaaaaaaa
+*/
+void GlobalHardLayer::innerCostmapUpdate(const nav_msgs::OccupancyGridConstPtr& new_map)
+{
+  int it = 0;
+  for (int j = 0; j < new_map->info.width; j++)
+  {
+    for (int i = 0; i < new_map->info.height; i++)
+    {
+      if (costmap_[it] != NO_INFORMATION && costmap_[it] != FREE_SPACE && costmap_[it] != LETHAL_OBSTACLE)
+      {  
+        unsigned char x = costmap_[it];
+        ROS_ERROR_THROTTLE(100,"%u",costmap_[it]);
+        ROS_ERROR_COND(x == 255, "Shieet 255");
+        ROS_ERROR_COND(x == 0, "MPOUTSA 0");
+        ROS_ERROR_COND(x == 254, "SKATA 254");
+        costmap_[it] = NO_INFORMATION;
+      }
+      //printf("Incoming %d \n", new_map->data[it]);
+      //printf("Costmap before ---------------------  %u \n", costmap_[it]);
+      if (new_map->data[it] != 51)
+        costmap_[it] = interpretValue(new_map->data[it]);
+      //printf("Costmap after ------------------------------------------  %u \n", costmap_[it]);
+      it++;
+    }
+
+  }
+}
+
 void GlobalHardLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
 {
-  // Pairnw to map kai to kanw resize
+  unsigned int size_x = new_map->info.width, size_y = new_map->info.height;
+  
   Costmap2D* master = layered_costmap_->getCostmap();
-  boost::shared_ptr<nav_msgs::OccupancyGrid> map_copy(new nav_msgs::OccupancyGrid);
-  *map_copy = *new_map;
-
-  // resize costmap if size, resolution or origin do not match
-  //Costmap2D* master = layered_costmap_->getCostmap();
-  unsigned int size_x = map_copy->info.width, size_y = map_copy->info.height;
-  if (master->getSizeInCellsX() != size_x ||
+  
+  unsigned int master_size_x = master->getSizeInCellsX();
+  unsigned int master_size_y = master->getSizeInCellsY();
+  double master_origin_x = master->getOriginX();
+  double master_origin_y = master->getOriginY();
+  
+  ROS_INFO("[Debug Hard]Received a %d X %d map at %f m/pix", size_x, size_y, new_map->info.resolution);
+  ROS_ERROR("size_x of costmap[%d] size_y of costmap[%d]",size_x_,size_y_);
+  
+  if(master->getSizeInCellsX() != size_x ||
       master->getSizeInCellsY() != size_y ||
-      master->getResolution() != map_copy->info.resolution ||
-      master->getOriginX() != map_copy->info.origin.position.x ||
-      master->getOriginY() != map_copy->info.origin.position.y ||
+      master->getResolution() != new_map->info.resolution ||
+      master->getOriginX() != new_map->info.origin.position.x ||
+      master->getOriginY() != new_map->info.origin.position.y ||
       !layered_costmap_->isSizeLocked())
   {
-    // The master grid data
-    ROS_INFO("YOOOO");
-    unsigned int sizeX = master->getSizeInCellsX();  // [cells]
-    unsigned int sizeY = master->getSizeInCellsY();  // [cells]
-    float res = master->getResolution();  // [m/cell]
-    float origX = master->getOriginX();  // [m]
-    float origY = master->getOriginY();  // [m]
-
-    // The difference of origins in meters
-    float xDiff = new_map->info.origin.position.x - origX;  // [m]
-    float yDiff = new_map->info.origin.position.y - origY;  // [m]
-
-    // The differenceof origins in cells
-    unsigned int xDiffCells = static_cast<unsigned int>(xDiff / res)+1;
-    unsigned int yDiffCells = static_cast<unsigned int>(yDiff / res)+1;
-
-    // Set the MapMetaData of the master grid to the map_copy
-    map_copy->info.width = sizeX;
-    map_copy->info.height = sizeY;
-    map_copy->info.resolution = res;
-    map_copy->info.origin.position.x = origX;
-    map_copy->info.origin.position.y = origY;
-
-    // A temporary array with the size of the master, containing NO_INFO
-    std::vector<signed char> temp_arr(sizeX * sizeY, 51);
-
-    unsigned int it = 0;
-
-    for(unsigned int ii=0; ii<new_map->info.width; ii++)
-    {
-      for(unsigned int jj=0; jj<new_map->info.height; jj++)
-      {
-        temp_arr[jj + ii * new_map->info.width] = new_map->data[jj + ii * new_map->info.width];
-        //++it;
-      }
-    }
-    map_copy->data = temp_arr;
-    ROS_INFO("Map copy Width: %d,  Height: %d", map_copy->info.width, map_copy->info.height);
-    //mapResizer(*map_copy, sizeX, sizeY, res, origX, origY);
-
-
-
-    ROS_DEBUG("Received a %d X %d map at %f m/pix", size_x, size_y, map_copy->info.resolution);
-
-
-    ROS_INFO("[HardLayer]Resizing costmap to %d X %d at %f m/pix", size_x, size_y, map_copy->info.resolution);
-    //layered_costmap_->resizeMap(size_x, size_y, map_copy->info.resolution, map_copy->info.origin.position.x,
-    //                           map_copy->info.origin.position.y, true);
-  }else if(size_x_ != size_x || size_y_ != size_y ||
-      resolution_ != map_copy->info.resolution ||
-      origin_x_ != map_copy->info.origin.position.x ||
-      origin_y_ != map_copy->info.origin.position.y){
+    ROS_ERROR("[Hard Layer] Resizing Master with the new message data");
+    layered_costmap_->resizeMap(size_x, size_y, new_map->info.resolution, new_map->info.origin.position.x,
+                                new_map->info.origin.position.y, true);
+  }
+  else if(size_x_ != size_x || size_y_ != size_y ||
+      resolution_ != new_map->info.resolution ||
+      origin_x_ != new_map->info.origin.position.x ||
+      origin_y_ != new_map->info.origin.position.y)
+  {
     matchSize();
   }
-
+  // resize costmap if size, resolution or origin do not match
+  //matchSize();
   unsigned int index = 0;
 
-  for (unsigned int i = 0; i < size_y_; ++i)
-  {
-    for (unsigned int j = 0; j < size_x_; ++j)
-    {
-	    unsigned char value = map_copy->data[index];
-	    // if(interpretValue(value) == NO_INFORMATION)
-	    // {
-		  //   ++index;  // auto mallon ftaiei gia to mov
-	    // }
-	    // else
-	    // {
-      costmap_[index] = interpretValue(value);
-      ++index;
-	    // }
-    }
-  }
-
+  //minX = static_cast<>(new_map->info.origin.position.x)/new_map->info.
+  innerCostmapUpdate(new_map);
+  //initialize the costmap with static data
+  // for (unsigned int i = 0; i < size_y_; ++i)
+  // {
+  //   for (unsigned int j = 0; j < size_x_; ++j)
+  //   {
+  //     unsigned char value = new_map->data[index];
+  //     costmap_[index] = interpretValue(value);
+  //     ++index;
+  //   }
+  // }
+  
   x_ = y_ = 0;
   width_ = size_x_;
   height_ = size_y_;
   map_received_ = true;
   has_updated_data_ = true;
+
 }
+
+// unsigned char GlobalHardLayer::interpretValueInd(unsigned char value, unsigned int indx)
+// {
+//   Costmap2D* master = layered_costmap_->getCostmap();
+//   //check if the static value is above the unknown or lethal thresholds
+//   // if (value > 51)
+//   //   return LETHAL_OBSTACLE;
+//   // else
+//   //   return NO_INFORMATION;
+//   if (value == unknown_cost_value_)
+//     return *(master->getCharMap()+indx);
+//   else if (value >= lethal_threshold_)
+//     return LETHAL_OBSTACLE;
+//   else
+//     return FREE_SPACE;
+//   //
+//   // double scale = (double) value / lethal_threshold_;
+//   // return scale * LETHAL_OBSTACLE;
+// }
+
 unsigned char GlobalHardLayer::interpretValue(unsigned char value)
 {
-  //check if the static value is above the unknown or lethal thresholds
-  if (value > 51)
-    return LETHAL_OBSTACLE;
-  else if (value<51)
-    return FREE_SPACE;
-  else
+  //ROS_ERROR("%u",value);
+  if (value == unknown_cost_value_)
     return NO_INFORMATION;
-  // if (value == unknown_cost_value_)
-  //   return NO_INFORMATION;
-  // else if (value >= lethal_threshold_)
-  //   return LETHAL_OBSTACLE;
-  // else if (trinary_costmap_)
-  //   return FREE_SPACE;
-  //
-  // double scale = (double) value / lethal_threshold_;
-  // return scale * LETHAL_OBSTACLE;
+  else if (value >= lethal_threshold_)
+    return LETHAL_OBSTACLE;
+  else
+    return FREE_SPACE;
 }
 
 

@@ -213,6 +213,7 @@ bool Costmap2D::worldToMap(double wx, double wy, unsigned int& mx, unsigned int&
   if (mx < size_x_ && my < size_y_)
     return true;
 
+  printf("Yoooo! \n");
   return false;
 }
 
