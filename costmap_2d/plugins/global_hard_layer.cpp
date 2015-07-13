@@ -22,7 +22,7 @@ void GlobalHardLayer::onInitialize()
 
   std::string slamMapTopic;
   nh.param("slam_topic", slamMapTopic, std::string("/slam/map"));
-
+  bufferCostmap_.reset( new nav_msgs::OccupancyGrid );
 
   nh.param("track_unknown_space", track_unknown_space_, true);
 
@@ -103,6 +103,8 @@ unsigned char GlobalHardLayer::interpretValue(unsigned char value)
 
 void GlobalHardLayer::innerCostmapUpdate(const nav_msgs::OccupancyGridConstPtr& new_map)
 {
+  ROS_ERROR("Layer size_x_:[%d] size_y_[%d]", size_x_, size_y_);
+  ROS_ERROR("New Map size_x:[%d] size_y[%d]", new_map->info.width, new_map->info.height);
   int it = 0;
   for (int j = 0; j < new_map->info.width; j++)
   {
