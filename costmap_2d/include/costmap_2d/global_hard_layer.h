@@ -73,6 +73,12 @@ private:
    */
   unsigned char interpretValue(unsigned char value);
 
+  void alignWithNewMap(const nav_msgs::OccupancyGridConstPtr& in,
+      const nav_msgs::OccupancyGridPtr& out);
+
+  void mapDilation(const nav_msgs::OccupancyGridPtr& in, int steps, int coords,
+              nav_msgs::OccupancyGridConstPtr checkMap = nav_msgs::OccupancyGridPtr());
+              
   std::string global_frame_; ///< @brief The global frame for the costmap
 
   bool map_received_;

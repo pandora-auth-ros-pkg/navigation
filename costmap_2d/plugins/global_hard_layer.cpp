@@ -197,4 +197,132 @@ void GlobalHardLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i,
   updateWithOverwrite(master_grid, min_i, min_j, max_i, max_j);
 }
 
+void GlobalHardLayer::alignWithNewMap(const nav_msgs::OccupancyGridConstPtr& in,
+    const nav_msgs::OccupancyGridPtr& out)
+{
+  int oldSize = out->data.size();
+  int newSize = in->data.size();
+  int8_t* oldMap = new int8_t[oldSize];
+  nav_msgs::MapMetaData oldMetaData;
+  if (oldSize != 0 && oldSize != newSize)
+  {
+    // Copy old coverage map meta data.
+    oldMetaData = out->info;
+    // Copy old coverage map.
+    memcpy(oldMap, &out->data[0], out->data.size());
+  }
+  // Reset coveredSpace_->and copy map2dPtr_'s metadata.
+  out->header = in->header;
+  out->info = in->info;
+  if (oldSize != newSize)
+  {
+    ROS_WARN("[SENSOR_COVERAGE_SPACE_CHECKER %d] Resizing space coverage...", __LINE__);
+    out->data.resize(newSize, 0);
+    // ROS_ASSERT(newSize == out->data.size());
+
+    if (oldSize != 0)
+    {
+      double yawDiff = tf::getYaw(out->info.origin.orientation) -
+        tf::getYaw(oldMetaData.origin.orientation);
+      double xDiff = out->info.origin.position.x -
+        oldMetaData.origin.position.x;
+      double yDiff = out->info.origin.position.y -
+        oldMetaData.origin.position.y;
+
+      double x = 0, y = 0, xn = 0, yn = 0;
+      for (unsigned int ii = 0; ii < oldMetaData.width; ++ii)
+      {
+        for (unsigned int jj = 0; jj < oldMetaData.height; ++jj)
+        {
+          x = ii * oldMetaData.resolution;
+          y = jj * oldMetaData.resolution;
+          xn = cos(yawDiff) * x - sin(yawDiff) * y - xDiff;
+          yn = sin(yawDiff) * x + cos(yawDiff) * y - yDiff;
+          int coords = static_cast<int>(round(xn / out->info.resolution) +
+                round(yn * out->info.width / out->info.resolution));
+          if ((coords > newSize) || (coords < 0))
+          {
+            ROS_WARN("Error resizing to: %d\nCoords Xn: %f, Yn: %f\n", newSize, xn, yn);
+          }
+          else
+          {
+            uint8_t temp = oldMap[ii + jj * oldMetaData.width];
+            out->data[coords] = temp;
+            GlobalHardLayer::mapDilation(out, 2, coords, in);
+          }
+        }
+      }
+    }
+  }
+  delete[] oldMap;
+}
+
+void GlobalHardLayer::mapDilation(const nav_msgs::OccupancyGridPtr& in, int steps, int coords,
+            nav_msgs::OccupancyGridConstPtr checkMap)
+{
+  if (steps == 0)
+    return;
+  bool check = checkMap.get() != NULL;
+
+  signed char cell = in->data[coords];
+
+  if (cell != 0)  // That's foreground
+  {
+    // Check for all adjacent
+    if (in->data[coords + in->info.width + 1] == 0)
+    {
+      if (!check || checkMap->data[coords + in->info.width + 1] < 51)
+      {
+        in->data[coords + in->info.width + 1] = cell;
+        GlobalHardLayer::mapDilation(in, steps - 1, coords + in->info.width + 1);
+      }
+    }
+    if (in->data[coords + in->info.width] == 0)
+    {
+      if (!check || checkMap->data[coords + in->info.width] < 51)
+        in->data[coords + in->info.width] = cell;
+    }
+    if (in->data[coords + in->info.width - 1] == 0)
+    {
+      if (!check || checkMap->data[coords + in->info.width - 1] < 51)
+      {
+        in->data[coords + in->info.width - 1] = cell;
+        GlobalHardLayer::mapDilation(in, steps - 1, coords + in->info.width - 1);
+      }
+    }
+    if (in->data[coords + 1] == 0)
+    {
+      if (!check || checkMap->data[coords + 1] < 51)
+        in->data[coords + 1] = cell;
+    }
+    if (in->data[coords - 1] == 0)
+    {
+      if (!check || checkMap->data[coords - 1] < 51)
+        in->data[coords - 1] = cell;
+    }
+    if (in->data[coords - in->info.width + 1] == 0)
+    {
+      if (!check || checkMap->data[coords - in->info.width + 1] < 51)
+      {
+        in->data[coords - in->info.width + 1] = cell;
+        GlobalHardLayer::mapDilation(in, steps - 1, coords - in->info.width + 1);
+      }
+    }
+    if (in->data[coords - in->info.width] == 0)
+    {
+      if (!check || checkMap->data[coords - in->info.width] < 51)
+        in->data[coords - in->info.width] = cell;
+    }
+    if (in->data[coords - in->info.width - 1] == 0)
+    {
+      if (!check || checkMap->data[coords - in->info.width - 1] < 51)
+      {
+        in->data[coords - in->info.width - 1] = cell;
+        GlobalHardLayer::mapDilation(in, steps - 1, coords - in->info.width - 1);
+      }
+    }
+  }
+}
+
+
 }
