@@ -111,7 +111,7 @@ Costmap2DROS::Costmap2DROS(std::string name, tf::TransformListener& tf) :
 
   /* Added by dimkirts */
   if(name == "local_costmap")
-  {  
+  {
     private_nh.param("width", width, 10);
     private_nh.param("height", height, 10);
     private_nh.param("resolution", resolution, 0.05);
@@ -121,8 +121,8 @@ Costmap2DROS::Costmap2DROS(std::string name, tf::TransformListener& tf) :
     layered_costmap_->resizeMap((unsigned int)(width / resolution),
                                   (unsigned int)(height / resolution), resolution, origin_x, origin_y);
   }
-  /* end */ 
-  
+  /* end */
+
   if (!private_nh.hasParam("plugins"))
   {
     resetOldParameters(private_nh);
@@ -476,7 +476,7 @@ void Costmap2DROS::readFootprintFromXMLRPC( XmlRpc::XmlRpcValue& footprint_xmlrp
     throw std::runtime_error( "The footprint must be specified as list of lists on the parameter server with at least 3 points eg: [[x1, y1], [x2, y2], ..., [xn, yn]]");
   }
 
-  std::vector<geometry_msgs::Point> footprint;  
+  std::vector<geometry_msgs::Point> footprint;
   geometry_msgs::Point pt;
 
   for( int i = 0; i < footprint_xmlrpc.size(); ++i )
@@ -490,10 +490,10 @@ void Costmap2DROS::readFootprintFromXMLRPC( XmlRpc::XmlRpcValue& footprint_xmlrp
                  full_param_name.c_str() );
       throw std::runtime_error( "The footprint must be specified as list of lists on the parameter server eg: [[x1, y1], [x2, y2], ..., [xn, yn]], but this spec is not of that form" );
     }
-       
+
     pt.x = getNumberFromXMLRPC( point[ 0 ], full_param_name );
     pt.y = getNumberFromXMLRPC( point[ 1 ], full_param_name );
-       
+
     footprint.push_back( pt );
   }
 

@@ -61,43 +61,39 @@ public:
                              double* max_y);
   virtual void updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
 
-  virtual void matchSize();
-
 private:
-  void reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level);
-
-  void slamCB(const nav_msgs::OccupancyGridConstPtr& slamMap);
-
+  void slamCb(const nav_msgs::OccupancyGridConstPtr& slamMap);
+  void visionHardCb(const nav_msgs::OccupancyGridConstPtr& hardPatch);
 
   /**
    * @brief
    * @param value
    *
    */
-  unsigned char interpretValue(unsigned char value);
+  uint8_t interpretValue(int8_t value);
   void innerCostmapUpdate(const nav_msgs::OccupancyGridConstPtr& new_map);
 
   void alignWithNewMap(const nav_msgs::OccupancyGridConstPtr& in,
       const nav_msgs::OccupancyGridPtr& out);
+  void bufferUpdate(const nav_msgs::OccupancyGridPtr buffer,
+      const nav_msgs::OccupancyGridConstPtr& patch);
+  void mapDilation(const nav_msgs::OccupancyGridPtr& in,
+      int steps, int coords,
+      nav_msgs::OccupancyGridConstPtr checkMap = nav_msgs::OccupancyGridPtr());
 
-  void mapDilation(const nav_msgs::OccupancyGridPtr& in, int steps, int coords,
-              nav_msgs::OccupancyGridConstPtr checkMap = nav_msgs::OccupancyGridPtr());
+protected:
+  unsigned int x_, y_, width_, height_;
+  nav_msgs::OccupancyGridPtr bufferCostmap_;
+  int8_t unknown_cost_value_;
+
+private:
+  ros::Subscriber slam_map_sub_;
+  std::string slam_map_topic_;
+
+  ros::Subscriber vision_hard_sub_;
+  std::string vision_hard_topic_;
 
   std::string global_frame_; ///< @brief The global frame for the costmap
-
-  bool map_received_;
-  bool has_updated_data_;
-  unsigned int x_,y_,width_,height_;
-  bool track_unknown_space_;
-
-
-  ros::Subscriber slamMapSub_;
-  nav_msgs::OccupancyGridPtr bufferCostmap_;
-
-  unsigned char lethal_threshold_, unknown_cost_value_;
-
-  mutable boost::recursive_mutex lock_;
-  dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig> *dsrv_;
 };
 }
 #endif

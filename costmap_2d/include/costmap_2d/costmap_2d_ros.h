@@ -232,7 +232,7 @@ protected:
 private:
   /** @brief Set the footprint from the given string.
    *
-   * Format should be bracketed array of arrays of floats, like so: [[1.0, 2.2], [3.3, 4.2], ...] 
+   * Format should be bracketed array of arrays of floats, like so: [[1.0, 2.2], [3.3, 4.2], ...]
    * @return true on success, false on failure. */
   bool readFootprintFromString( const std::string& footprint_string );
 
@@ -245,7 +245,7 @@ private:
 
   /** @brief Set the footprint to a circle of the given radius, in meters. */
   void setFootprintFromRadius( double radius );
-  
+
   /** @brief Read the ros-params "footprint" and/or "robot_radius" from
    * the given NodeHandle using searchParam() to go up the tree.
    *

@@ -11,10 +11,11 @@ using costmap_2d::FREE_SPACE;
 namespace costmap_2d
 {
 
-GlobalHardLayer::GlobalHardLayer() : dsrv_(NULL) {}
+GlobalHardLayer::GlobalHardLayer() {}
 
 void GlobalHardLayer::onInitialize()
 {
+  // TODO
   ros::NodeHandle nh("~/" + name_), g_nh;
   current_ = true;
 
@@ -60,25 +61,6 @@ void GlobalHardLayer::onInitialize()
   dsrv_->setCallback(cb);
 }
 
-void GlobalHardLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level)
-{
-  if (config.enabled != enabled_)
-  {
-    enabled_ = config.enabled;
-    has_updated_data_ = true;
-    x_ = y_ = 0;
-    width_ = size_x_;
-    height_ = size_y_;
-  }
-}
-
-void GlobalHardLayer::matchSize()
-{
-  Costmap2D* master = layered_costmap_->getCostmap();
-  resizeMap(master->getSizeInCellsX(), master->getSizeInCellsY(), master->getResolution(),
-            master->getOriginX(), master->getOriginY());
-}
-
 /*
 * @brief Interpret a cell cost to the corresponding typedef
 *
@@ -89,50 +71,60 @@ void GlobalHardLayer::matchSize()
 * If we have set the "trinary_costmap" parameter to true the function returns FREE_SPACE.
 * If "trinary_costmap" is false the function returns a scaled cost.
 */
-unsigned char GlobalHardLayer::interpretValue(unsigned char value)
+uint8_t GlobalHardLayer::interpretValue(int8_t value)
 {
   //check if the static value is above the unknown or lethal thresholds
-  if (track_unknown_space_ && value == unknown_cost_value_)
+  if (value == unknown_cost_value_)
     return NO_INFORMATION;
-  else if (value >= lethal_threshold_)
+  else if (value > unknown_cost_value_)
     return LETHAL_OBSTACLE;
   else
     return FREE_SPACE;
-
 }
 
-void GlobalHardLayer::innerCostmapUpdate(const nav_msgs::OccupancyGridConstPtr& new_map)
+void GlobalHardLayer::visionHardCb(const nav_msgs::OccupancyGridConstPtr& hardPatch)
 {
-  ROS_ERROR("Layer size_x_:[%d] size_y_[%d]", size_x_, size_y_);
-  ROS_ERROR("New Map size_x:[%d] size_y[%d]", new_map->info.width, new_map->info.height);
-  int it = 0;
-  for (int j = 0; j < new_map->info.width; j++)
-  {
-    for (int i = 0; i < new_map->info.height; i++)
-    {
-      if (costmap_[it] != NO_INFORMATION && costmap_[it] != FREE_SPACE && costmap_[it] != LETHAL_OBSTACLE)
-      {
-        unsigned char x = costmap_[it];
-        ROS_ERROR_THROTTLE(100,"%u",costmap_[it]);
-        ROS_ERROR_COND(x == 255, "Shieet 255");
-        ROS_ERROR_COND(x == 0, "MPOUTSA 0");
-        ROS_ERROR_COND(x == 254, "SKATA 254");
-        costmap_[it] = NO_INFORMATION;
-      }
-      //printf("Incoming %d \n", new_map->data[it]);
-      //printf("Costmap before ---------------------  %u \n", costmap_[it]);
-      if (new_map->data[it] != 51)
-        costmap_[it] = interpretValue(new_map->data[it]);
-      //printf("Costmap after ------------------------------------------  %u \n", costmap_[it]);
-      it++;
-    }
+  bufferUpdate(bufferCostmap_, hardMap);
+}
 
+void GlobalHardLayer::bufferUpdate(const nav_msgs::OccupancyGridPtr& buffer,
+    const nav_msgs::OccupancyGridConstPtr& patch)
+{
+  double yawDiff = tf::getYaw(buffer->info.origin.orientation) -
+    tf::getYaw(patch->info.origin.orientation);
+  double xDiff = buffer->info.origin.position.x -
+    patch->info.origin.position.x;
+  double yDiff = buffer->info.origin.position.y -
+    patch->info.origin.position.y;
+
+  double x = 0, y = 0, xn = 0, yn = 0;
+  for (unsigned int ii = 0; ii < patch->info.width; ++ii)
+  {
+    for (unsigned int jj = 0; jj < patch->info.height; ++jj)
+    {
+      x = ii * patch->info.resolution;
+      y = jj * patch->info.resolution;
+      xn = cos(yawDiff) * x - sin(yawDiff) * y - xDiff;
+      yn = sin(yawDiff) * x + cos(yawDiff) * y - yDiff;
+      int coords = static_cast<int>(round(xn / buffer->info.resolution) +
+            round(yn * buffer->info.width / buffer->info.resolution));
+      if ((coords > buffer->data.size()) || (coords < 0))
+      {
+        ROS_WARN("Error resizing to: %d\nCoords Xn: %f, Yn: %f\n", newSize, xn, yn);
+      }
+      else
+      {
+        uint8_t temp = patch->data[ii + jj * patch->info.width];
+        buffer->data[coords] = temp;
+        mapDilation(buffer, 2, coords);
+      }
+    }
   }
 }
 
-// Callback to slam map
-void GlobalHardLayer::slamCB(const nav_msgs::OccupancyGridConstPtr& slamMap)
+void GlobalHardLayer::slamCb(const nav_msgs::OccupancyGridConstPtr& slamMap)
 {
+  //TODO
   unsigned int slamWidth = slamMap->info.width;
   unsigned int slamHeight = slamMap->info.height;
   double slamOrgX = slamMap->info.origin.position.x;
@@ -185,22 +177,22 @@ void GlobalHardLayer::slamCB(const nav_msgs::OccupancyGridConstPtr& slamMap)
   has_updated_data_ = true;
 }
 
-
-
 void GlobalHardLayer::activate()
 {
-    onInitialize();
+  // TODO
+  onInitialize();
 }
 
 void GlobalHardLayer::deactivate()
 {
-    slamMapSub_.shutdown();
+  slam_map_sub_.shutdown();
+  vision_hard_sub_.shutdown();
 }
 
 void GlobalHardLayer::reset()
 {
-    deactivate();
-    activate();
+  deactivate();
+  activate();
 }
 
 void GlobalHardLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y,
@@ -209,6 +201,7 @@ void GlobalHardLayer::updateBounds(double robot_x, double robot_y, double robot_
   if (!map_received_ || !has_updated_data_)
     return;
 
+  // TODO bounds are get from most recent vision update
   double mx, my;
   // convert from map coordinates to world coordinates
   // x_, y_ are the map coordinates mx, my are the world coordinates
@@ -221,7 +214,6 @@ void GlobalHardLayer::updateBounds(double robot_x, double robot_y, double robot_
   *max_y = std::max(my, *max_y);
 
   has_updated_data_ = false;
-
 }
 
 void GlobalHardLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j)
@@ -282,7 +274,7 @@ void GlobalHardLayer::alignWithNewMap(const nav_msgs::OccupancyGridConstPtr& in,
           {
             uint8_t temp = oldMap[ii + jj * oldMetaData.width];
             out->data[coords] = temp;
-            GlobalHardLayer::mapDilation(out, 2, coords, in);
+            mapDilation(out, 2, coords);
           }
         }
       }
@@ -291,8 +283,8 @@ void GlobalHardLayer::alignWithNewMap(const nav_msgs::OccupancyGridConstPtr& in,
   delete[] oldMap;
 }
 
-void GlobalHardLayer::mapDilation(const nav_msgs::OccupancyGridPtr& in, int steps, int coords,
-            nav_msgs::OccupancyGridConstPtr checkMap)
+void GlobalHardLayer::mapDilation(const nav_msgs::OccupancyGridPtr& in,
+    int steps, int coords, nav_msgs::OccupancyGridConstPtr checkMap)
 {
   if (steps == 0)
     return;
@@ -300,7 +292,7 @@ void GlobalHardLayer::mapDilation(const nav_msgs::OccupancyGridPtr& in, int step
 
   signed char cell = in->data[coords];
 
-  if (cell != 0)  // That's foreground
+  if (cell > unknown_cost_value_)  // That's foreground
   {
     // Check for all adjacent
     if (in->data[coords + in->info.width + 1] == 0)
@@ -308,7 +300,7 @@ void GlobalHardLayer::mapDilation(const nav_msgs::OccupancyGridPtr& in, int step
       if (!check || checkMap->data[coords + in->info.width + 1] < 51)
       {
         in->data[coords + in->info.width + 1] = cell;
-        GlobalHardLayer::mapDilation(in, steps - 1, coords + in->info.width + 1);
+        mapDilation(in, steps - 1, coords + in->info.width + 1);
       }
     }
     if (in->data[coords + in->info.width] == 0)
@@ -321,7 +313,7 @@ void GlobalHardLayer::mapDilation(const nav_msgs::OccupancyGridPtr& in, int step
       if (!check || checkMap->data[coords + in->info.width - 1] < 51)
       {
         in->data[coords + in->info.width - 1] = cell;
-        GlobalHardLayer::mapDilation(in, steps - 1, coords + in->info.width - 1);
+        mapDilation(in, steps - 1, coords + in->info.width - 1);
       }
     }
     if (in->data[coords + 1] == 0)
@@ -339,7 +331,7 @@ void GlobalHardLayer::mapDilation(const nav_msgs::OccupancyGridPtr& in, int step
       if (!check || checkMap->data[coords - in->info.width + 1] < 51)
       {
         in->data[coords - in->info.width + 1] = cell;
-        GlobalHardLayer::mapDilation(in, steps - 1, coords - in->info.width + 1);
+        mapDilation(in, steps - 1, coords - in->info.width + 1);
       }
     }
     if (in->data[coords - in->info.width] == 0)
@@ -352,11 +344,10 @@ void GlobalHardLayer::mapDilation(const nav_msgs::OccupancyGridPtr& in, int step
       if (!check || checkMap->data[coords - in->info.width - 1] < 51)
       {
         in->data[coords - in->info.width - 1] = cell;
-        GlobalHardLayer::mapDilation(in, steps - 1, coords - in->info.width - 1);
+        mapDilation(in, steps - 1, coords - in->info.width - 1);
       }
     }
   }
 }
-
 
 }

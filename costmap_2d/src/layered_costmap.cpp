@@ -160,7 +160,7 @@ void LayeredCostmap::setFootprint(const std::vector<geometry_msgs::Point>& footp
       ++plugin)
   {
     (*plugin)->onFootprintChanged();
-  }  
+  }
 }
 
 } // namespace layered_costmap

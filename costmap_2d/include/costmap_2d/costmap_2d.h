@@ -61,7 +61,7 @@ class Costmap2D
 {
   friend class CostmapTester; //Need this for gtest to work correctly
 public:
-  
+
   /**
    * @brief  Constructor for a costmap
    * @param  cells_size_x The x size of the map in cells
