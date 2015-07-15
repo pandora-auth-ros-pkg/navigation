@@ -23,7 +23,7 @@ void CoverageLayer::onInitialize()
   std::string map_topic;
   nh.param("map_topic", map_topic, std::string("map"));
   nh.param("subscribe_to_updates", subscribe_to_updates_, false);
-  
+
   nh.param("track_unknown_space", track_unknown_space_, true);
   nh.param("use_maximum", use_maximum_, false);
 
@@ -48,7 +48,7 @@ void CoverageLayer::onInitialize()
   }
 
   ROS_INFO("Received a %d X %d map at %f m/pix", getSizeInCellsX(), getSizeInCellsY(), getResolution());
-  
+
   if(subscribe_to_updates_)
   {
     ROS_INFO("Subscribing to updates");
@@ -184,15 +184,15 @@ void CoverageLayer::updateBounds(double robot_x, double robot_y, double robot_ya
     return;
 
   double mx, my;
-  
+
   mapToWorld(x_, y_, mx, my);
   *min_x = std::min(mx, *min_x);
   *min_y = std::min(my, *min_y);
-  
+
   mapToWorld(x_ + width_, y_ + height_, mx, my);
   *max_x = std::max(mx, *max_x);
   *max_y = std::max(my, *max_y);
-  
+
   has_updated_data_ = false;
 
 }

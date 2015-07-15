@@ -65,33 +65,28 @@ private:
   void slamCb(const nav_msgs::OccupancyGridConstPtr& slamMap);
   void visionHardCb(const nav_msgs::OccupancyGridConstPtr& hardPatch);
 
-  /**
-   * @brief
-   * @param value
-   *
-   */
   uint8_t interpretValue(int8_t value);
-  void innerCostmapUpdate(const nav_msgs::OccupancyGridConstPtr& new_map);
 
-  void alignWithNewMap(const nav_msgs::OccupancyGridConstPtr& in,
+  bool alignWithNewMap(const nav_msgs::OccupancyGridConstPtr& in,
       const nav_msgs::OccupancyGridPtr& out);
-  void bufferUpdate(const nav_msgs::OccupancyGridPtr buffer,
+  void bufferUpdate(const nav_msgs::OccupancyGridPtr& buffer,
       const nav_msgs::OccupancyGridConstPtr& patch);
   void mapDilation(const nav_msgs::OccupancyGridPtr& in,
       int steps, int coords,
       nav_msgs::OccupancyGridConstPtr checkMap = nav_msgs::OccupancyGridPtr());
 
 protected:
-  unsigned int x_, y_, width_, height_;
   nav_msgs::OccupancyGridPtr bufferCostmap_;
-  int8_t unknown_cost_value_;
+  int unknown_cost_value_;
 
 private:
   ros::Subscriber slam_map_sub_;
   std::string slam_map_topic_;
+  bool map_received_;
 
   ros::Subscriber vision_hard_sub_;
   std::string vision_hard_topic_;
+  bool has_updated_data_;
 
   std::string global_frame_; ///< @brief The global frame for the costmap
 };

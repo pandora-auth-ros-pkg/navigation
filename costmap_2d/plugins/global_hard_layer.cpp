@@ -15,29 +15,32 @@ GlobalHardLayer::GlobalHardLayer() {}
 
 void GlobalHardLayer::onInitialize()
 {
-  // TODO
   ros::NodeHandle nh("~/" + name_), g_nh;
   current_ = true;
+  enabled_ = true;
+
+  setDefaultValue(NO_INFORMATION);
+  nh.param<int>("unknown_cost_value", unknown_cost_value_, 51);
 
   global_frame_ = layered_costmap_->getGlobalFrameID();
 
-  std::string slamMapTopic;
-  nh.param("slam_topic", slamMapTopic, std::string("/slam/map"));
+  if (!nh.getParam("slam_topic", slam_map_topic_))
+  {
+    ROS_FATAL("[%s] Cound not find slam topic!", name_.c_str());
+    ROS_BREAK();
+  }
+  slam_map_sub_ = g_nh.subscribe(slam_map_topic_, 1, &GlobalHardLayer::slamCb, this);
+
+  if (!nh.getParam("vision_hard_topic", vision_hard_topic_))
+  {
+    ROS_FATAL("[%s] Cound not find vision hard topic!", name_.c_str());
+    ROS_BREAK();
+  }
+  vision_hard_sub_ = g_nh.subscribe(vision_hard_topic_, 1, &GlobalHardLayer::visionHardCb, this);
+
   bufferCostmap_.reset( new nav_msgs::OccupancyGrid );
 
-  nh.param("track_unknown_space", track_unknown_space_, true);
-
-
-  int temp_lethal_threshold, temp_unknown_cost_value;
-  nh.param("lethal_cost_threshold", temp_lethal_threshold, int(100));
-  nh.param("unknown_cost_value", temp_unknown_cost_value, int(-1));
-
-
-  lethal_threshold_ = std::max(std::min(temp_lethal_threshold, 100), 0);
-  unknown_cost_value_ = temp_unknown_cost_value;
-  //we'll subscribe to the latched topic that the map server uses
   ROS_INFO("Requesting the map...");
-  slamMapSub_ = g_nh.subscribe(slamMapTopic, 1, &GlobalHardLayer::slamCB, this);
   map_received_ = false;
   has_updated_data_ = false;
 
@@ -49,16 +52,6 @@ void GlobalHardLayer::onInitialize()
   }
 
   ROS_INFO("Received a %d X %d map at %f m/pix", getSizeInCellsX(), getSizeInCellsY(), getResolution());
-
-  if(dsrv_)
-  {
-    delete dsrv_;
-  }
-
-  dsrv_ = new dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>(nh);
-  dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>::CallbackType cb = boost::bind(
-      &GlobalHardLayer::reconfigureCB, this, _1, _2);
-  dsrv_->setCallback(cb);
 }
 
 /*
@@ -84,7 +77,24 @@ uint8_t GlobalHardLayer::interpretValue(int8_t value)
 
 void GlobalHardLayer::visionHardCb(const nav_msgs::OccupancyGridConstPtr& hardPatch)
 {
-  bufferUpdate(bufferCostmap_, hardMap);
+  bufferUpdate(bufferCostmap_, hardPatch);
+  has_updated_data_ = true;
+  if (size_x_ == bufferCostmap_->info.width &&
+      size_y_ == bufferCostmap_->info.height &&
+      resolution_ == bufferCostmap_->info.resolution &&
+      origin_x_ == bufferCostmap_->info.origin.position.x &&
+      origin_y_ == bufferCostmap_->info.origin.position.y)
+  {
+    if (has_updated_data_)
+    {
+      boost::unique_lock<boost::shared_mutex> lock(*getLock());
+
+      for (int xx = 0; xx < bufferCostmap_->data.size(); ++xx)
+      {
+        costmap_[xx] = interpretValue(bufferCostmap_->data[xx]);
+      }
+    }
+  }
 }
 
 void GlobalHardLayer::bufferUpdate(const nav_msgs::OccupancyGridPtr& buffer,
@@ -110,76 +120,64 @@ void GlobalHardLayer::bufferUpdate(const nav_msgs::OccupancyGridPtr& buffer,
             round(yn * buffer->info.width / buffer->info.resolution));
       if ((coords > buffer->data.size()) || (coords < 0))
       {
-        ROS_WARN("Error resizing to: %d\nCoords Xn: %f, Yn: %f\n", newSize, xn, yn);
+        ROS_ERROR("Error resizing patch to buffer.");
       }
       else
       {
         uint8_t temp = patch->data[ii + jj * patch->info.width];
-        buffer->data[coords] = temp;
+        if (temp != unknown_cost_value_)
+          buffer->data[coords] = temp;
         mapDilation(buffer, 2, coords);
       }
+
+      // if (ii == 0 && jj == 0)
+      // {
+      //   x_ = static_cast<int>(round(xn / buffer->info.resolution));
+      //   y_ = static_cast<int>(round(yn / buffer->info.resolution));
+      // }
     }
   }
+  // width_ = static_cast<int>(round(patch->info.width * patch->info.resolution / buffer->info.resolution));
+  // height_ = static_cast<int>(round(patch->info.height * patch->info.resolution / buffer->info.resolution));
 }
 
 void GlobalHardLayer::slamCb(const nav_msgs::OccupancyGridConstPtr& slamMap)
 {
-  //TODO
-  unsigned int slamWidth = slamMap->info.width;
-  unsigned int slamHeight = slamMap->info.height;
-  double slamOrgX = slamMap->info.origin.position.x;
-  double slamOrgY = slamMap->info.origin.position.y;
-  double slamRes = slamMap->info.resolution;
-
-  // For the first time we get slam, so that elevationMap wont write in an
-  // empty buffer.
-  if (!map_received_)
+  Costmap2D* master = layered_costmap_->getCostmap();
+  if (master->getSizeInCellsX() != slamMap->info.width ||
+      master->getSizeInCellsY() != slamMap->info.height ||
+      master->getResolution() != slamMap->info.resolution ||
+      master->getOriginX() != slamMap->info.origin.position.x ||
+      master->getOriginY() != slamMap->info.origin.position.y)
+      // !layered_costmap_->isSizeLocked())
   {
-    ROS_INFO("slamCB first slam");
-    bufferCostmap_->info.width = slamWidth;
-    bufferCostmap_->info.height = slamHeight;
-    bufferCostmap_->info.origin.position.x = slamOrgX;
-    bufferCostmap_->info.origin.position.y = slamOrgY;
-    bufferCostmap_->info.resolution = slamRes;
-    bufferCostmap_->data.resize(slamWidth*slamHeight);
-    ROS_INFO("slamCB after copying to buffer slam");
-    int it = 0;
-    for(int i=0; i<=slamWidth; i++)
+    return;
+  }
+  else if(size_x_ != slamMap->info.width || size_y_ != slamMap->info.height ||
+      resolution_ != slamMap->info.resolution ||
+      origin_x_ != slamMap->info.origin.position.x ||
+      origin_y_ != slamMap->info.origin.position.y)
+  {
+    matchSize();
+  }
+
+  bool changed = alignWithNewMap(slamMap, bufferCostmap_);
+
+  if (has_updated_data_ || changed)
+  {
+    boost::unique_lock<boost::shared_mutex> lock(*getLock());
+
+    for (int xx = 0; xx < bufferCostmap_->data.size(); ++xx)
     {
-      for(int j=0; j<=slamHeight; j++)
-      {
-        bufferCostmap_->data[it] = 51;  // to param
-        it++;
-      }
+      costmap_[xx] = interpretValue(bufferCostmap_->data[xx]);
     }
-    ROS_INFO("slamCB after copying to before true");
-
-    ROS_INFO("slamCB buffer setted correctly");
   }
 
-  if (bufferCostmap_->info.width != slamWidth ||
-      bufferCostmap_->info.height != slamHeight ||
-      bufferCostmap_->info.origin.position.x != slamOrgX  ||
-      bufferCostmap_->info.origin.position.y != slamOrgY ||
-      bufferCostmap_->info.resolution != slamRes
-  )
-  {
-    ROS_INFO("slamCB align slam with buffer");
-    // Change MapMetaData and values in bufferCostmap
-    alignWithNewMap(slamMap, bufferCostmap_);
-  }
-
-  innerCostmapUpdate(bufferCostmap_);
-  x_ = y_ = 0;
-  width_ = size_x_;
-  height_ = size_y_;
   map_received_ = true;
-  has_updated_data_ = true;
 }
 
 void GlobalHardLayer::activate()
 {
-  // TODO
   onInitialize();
 }
 
@@ -195,21 +193,33 @@ void GlobalHardLayer::reset()
   activate();
 }
 
-void GlobalHardLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y,
-                                        double* max_x, double* max_y)
+void GlobalHardLayer::updateBounds(double robot_x, double robot_y, double robot_yaw,
+    double* min_x, double* min_y, double* max_x, double* max_y)
 {
   if (!map_received_ || !has_updated_data_)
     return;
 
-  // TODO bounds are get from most recent vision update
+  // double xDiff = origin_x_ - bufferCostmap_->info.origin.position.x;
+  // double yDiff = origin_y_ - bufferCostmap_->info.origin.position.y;
+  // double buf_resolution = bufferCostmap_->info.resolution;
+  // double x = 0, y = 0;
+  // x = x_ * buf_resolution;
+  // y = y_ * buf_resolution;
+  // x -= xDiff;
+  // y -= yDiff;
+  // x_ = static_cast<int>(round(x / resolution_));
+  // y_ = static_cast<int>(round(y / resolution_));
+  // width_ = static_cast<int>(round(width_ * buf_resolution / resolution_));
+  // height_ = static_cast<int>(round(height_ * buf_resolution / resolution_));
+
   double mx, my;
   // convert from map coordinates to world coordinates
   // x_, y_ are the map coordinates mx, my are the world coordinates
-  mapToWorld(x_, y_, mx, my);
+  mapToWorld(0, 0, mx, my);
   *min_x = std::min(mx, *min_x);
   *min_y = std::min(my, *min_y);
 
-  mapToWorld(x_ + width_, y_ + height_, mx, my);
+  mapToWorld(size_x_, size_y_, mx, my);
   *max_x = std::max(mx, *max_x);
   *max_y = std::max(my, *max_y);
 
@@ -223,7 +233,7 @@ void GlobalHardLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i,
   updateWithOverwrite(master_grid, min_i, min_j, max_i, max_j);
 }
 
-void GlobalHardLayer::alignWithNewMap(const nav_msgs::OccupancyGridConstPtr& in,
+bool GlobalHardLayer::alignWithNewMap(const nav_msgs::OccupancyGridConstPtr& in,
     const nav_msgs::OccupancyGridPtr& out)
 {
   int oldSize = out->data.size();
@@ -243,7 +253,7 @@ void GlobalHardLayer::alignWithNewMap(const nav_msgs::OccupancyGridConstPtr& in,
   if (oldSize != newSize)
   {
     ROS_WARN("[SENSOR_COVERAGE_SPACE_CHECKER %d] Resizing space coverage...", __LINE__);
-    out->data.resize(newSize, 0);
+    out->data.resize(newSize, unknown_cost_value_);
     // ROS_ASSERT(newSize == out->data.size());
 
     if (oldSize != 0)
@@ -281,6 +291,7 @@ void GlobalHardLayer::alignWithNewMap(const nav_msgs::OccupancyGridConstPtr& in,
     }
   }
   delete[] oldMap;
+  return newSize != oldSize;
 }
 
 void GlobalHardLayer::mapDilation(const nav_msgs::OccupancyGridPtr& in,
@@ -297,7 +308,7 @@ void GlobalHardLayer::mapDilation(const nav_msgs::OccupancyGridPtr& in,
     // Check for all adjacent
     if (in->data[coords + in->info.width + 1] == 0)
     {
-      if (!check || checkMap->data[coords + in->info.width + 1] < 51)
+      if (!check || checkMap->data[coords + in->info.width + 1] < unknown_cost_value_)
       {
         in->data[coords + in->info.width + 1] = cell;
         mapDilation(in, steps - 1, coords + in->info.width + 1);
@@ -305,12 +316,12 @@ void GlobalHardLayer::mapDilation(const nav_msgs::OccupancyGridPtr& in,
     }
     if (in->data[coords + in->info.width] == 0)
     {
-      if (!check || checkMap->data[coords + in->info.width] < 51)
+      if (!check || checkMap->data[coords + in->info.width] < unknown_cost_value_)
         in->data[coords + in->info.width] = cell;
     }
     if (in->data[coords + in->info.width - 1] == 0)
     {
-      if (!check || checkMap->data[coords + in->info.width - 1] < 51)
+      if (!check || checkMap->data[coords + in->info.width - 1] < unknown_cost_value_)
       {
         in->data[coords + in->info.width - 1] = cell;
         mapDilation(in, steps - 1, coords + in->info.width - 1);
@@ -318,17 +329,17 @@ void GlobalHardLayer::mapDilation(const nav_msgs::OccupancyGridPtr& in,
     }
     if (in->data[coords + 1] == 0)
     {
-      if (!check || checkMap->data[coords + 1] < 51)
+      if (!check || checkMap->data[coords + 1] < unknown_cost_value_)
         in->data[coords + 1] = cell;
     }
     if (in->data[coords - 1] == 0)
     {
-      if (!check || checkMap->data[coords - 1] < 51)
+      if (!check || checkMap->data[coords - 1] < unknown_cost_value_)
         in->data[coords - 1] = cell;
     }
     if (in->data[coords - in->info.width + 1] == 0)
     {
-      if (!check || checkMap->data[coords - in->info.width + 1] < 51)
+      if (!check || checkMap->data[coords - in->info.width + 1] < unknown_cost_value_)
       {
         in->data[coords - in->info.width + 1] = cell;
         mapDilation(in, steps - 1, coords - in->info.width + 1);
@@ -336,12 +347,12 @@ void GlobalHardLayer::mapDilation(const nav_msgs::OccupancyGridPtr& in,
     }
     if (in->data[coords - in->info.width] == 0)
     {
-      if (!check || checkMap->data[coords - in->info.width] < 51)
+      if (!check || checkMap->data[coords - in->info.width] < unknown_cost_value_)
         in->data[coords - in->info.width] = cell;
     }
     if (in->data[coords - in->info.width - 1] == 0)
     {
-      if (!check || checkMap->data[coords - in->info.width - 1] < 51)
+      if (!check || checkMap->data[coords - in->info.width - 1] < unknown_cost_value_)
       {
         in->data[coords - in->info.width - 1] = cell;
         mapDilation(in, steps - 1, coords - in->info.width - 1);
