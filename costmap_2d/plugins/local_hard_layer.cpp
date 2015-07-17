@@ -29,7 +29,7 @@ void LocalHardLayer::onInitialize()
     ROS_FATAL("[%s] Cound not find slam topic!", name_.c_str());
     ROS_BREAK();
   }
-  slam_map_sub_ = g_nh.subscribe(slam_map_topic_, 1, &LocalHardLayer::slamCb, this);
+  //slam_map_sub_ = g_nh.subscribe(slam_map_topic_, 1, &LocalHardLayer::slamCb, this);
 
   if (!nh.getParam("vision_hard_topic", vision_hard_topic_))
   {
@@ -77,25 +77,37 @@ uint8_t LocalHardLayer::interpretValue(int8_t value)
 
 void LocalHardLayer::visionHardCb(const nav_msgs::OccupancyGridConstPtr& hardPatch)
 {
-  boost::unique_lock<boost::shared_mutex> lock(*getLock());
-  bufferUpdate(bufferCostmap_, hardPatch);
-  has_updated_data_ = true;
-  // if (size_x_ == bufferCostmap_->info.width &&
-  //     size_y_ == bufferCostmap_->info.height &&
-  //     resolution_ == bufferCostmap_->info.resolution &&
-  //     origin_x_ == bufferCostmap_->info.origin.position.x &&
-  //     origin_y_ == bufferCostmap_->info.origin.position.y)
-  // {
-  //   if (has_updated_data_)
-  //   {
-  //     boost::unique_lock<boost::shared_mutex> lock(*getLock());
+  Costmap2D* master_costmap = layered_costmap_->getCostmap();
+  matchSize();
+	// Boundaries of the buffer
+	double res = bufferCostmap_->info.resolution;
+	unsigned int size_x = bufferCostmap_->info.width, size_y = bufferCostmap_->info.height;
+  unsigned int map_minX = static_cast<int>(bufferCostmap_->info.origin.position.x / res);
+  unsigned int map_minY = static_cast<int>(bufferCostmap_->info.origin.position.y / res);
+  unsigned int map_maxX = map_minX + size_x;
+  unsigned int map_maxY = map_minY + size_y;
 
-  //     for (int xx = 0; xx < bufferCostmap_->data.size(); ++xx)
-  //     {
-  //       costmap_[xx] = interpretValue(bufferCostmap_->data[xx]);
-  //     }
-  //   }
-  // }
+	// Boundaries of the master grid
+	unsigned int master_minX = static_cast<int>( master_costmap->getOriginX() / master_costmap->getResolution() );
+  unsigned int master_minY = static_cast<int>( master_costmap->getOriginY() / master_costmap->getResolution() );
+  unsigned int master_maxX = master_minX + master_costmap->getSizeInCellsX();
+  unsigned int master_maxY = master_minY + master_costmap->getSizeInCellsY();
+
+  unsigned int it = 0;
+  unsigned int index = 0;
+	for(unsigned int i=0; i<=master_costmap->getSizeInCellsX(); i++)
+	{
+    for(unsigned int j=0; j<=master_costmap->getSizeInCellsY(); j++)
+		{
+			it = (j+(master_minX - map_minX)) + (i+(master_minY - map_minY))*bufferCostmap_->info.width;
+			if (hardPatch->data[it] != unknown_cost_value_)
+        costmap_[index] = interpretValue(hardPatch->data[it]);
+      index++;
+    }
+  }
+
+  has_updated_data_ = true;
+  map_received_ = true;
 }
 
 void LocalHardLayer::bufferUpdate(const nav_msgs::OccupancyGridPtr& buffer,
@@ -142,45 +154,28 @@ void LocalHardLayer::bufferUpdate(const nav_msgs::OccupancyGridPtr& buffer,
   // height_ = static_cast<int>(round(patch->info.height * patch->info.resolution / buffer->info.resolution));
 }
 
-void LocalHardLayer::slamCb(const nav_msgs::OccupancyGridConstPtr& slamMap)
-{
-  Costmap2D* master = layered_costmap_->getCostmap();
-  if (master->getSizeInCellsX() != slamMap->info.width ||
-      master->getSizeInCellsY() != slamMap->info.height ||
-      master->getResolution() != slamMap->info.resolution ||
-      master->getOriginX() != slamMap->info.origin.position.x ||
-      master->getOriginY() != slamMap->info.origin.position.y)
-      // !layered_costmap_->isSizeLocked())
-  {
-    layered_costmap_->resizeMap(slamMap->info.width, slamMap->info.height,
-        slamMap->info.resolution, slamMap->info.origin.position.x,
-        slamMap->info.origin.position.y, true);
-  }
-  // else if(size_x_ != slamMap->info.width || size_y_ != slamMap->info.height ||
-  //     resolution_ != slamMap->info.resolution ||
-  //     origin_x_ != slamMap->info.origin.position.x ||
-  //     origin_y_ != slamMap->info.origin.position.y)
-  // {
-  //   matchSize();
-  // }
-
-  {
-    boost::unique_lock<boost::shared_mutex> lock(*getLock());
-    alignWithNewMap(slamMap, bufferCostmap_);
-  }
-
-  // if (has_updated_data_ || changed)
-  // {
-  //   boost::unique_lock<boost::shared_mutex> lock(*getLock());
-
-  //   for (int xx = 0; xx < bufferCostmap_->data.size(); ++xx)
-  //   {
-  //     costmap_[xx] = interpretValue(bufferCostmap_->data[xx]);
-  //   }
-  // }
-
-  map_received_ = true;
-}
+// void LocalHardLayer::slamCb(const nav_msgs::OccupancyGridConstPtr& slamMap)
+// {
+//   //matchSize();
+//
+//
+//   {
+//     boost::unique_lock<boost::shared_mutex> lock(*getLock());
+//     alignWithNewMap(slamMap, bufferCostmap_);
+//   }
+//
+//   // if (has_updated_data_ || changed)
+//   // {
+//   //   boost::unique_lock<boost::shared_mutex> lock(*getLock());
+//
+//   //   for (int xx = 0; xx < bufferCostmap_->data.size(); ++xx)
+//   //   {
+//   //     costmap_[xx] = interpretValue(bufferCostmap_->data[xx]);
+//   //   }
+//   // }
+//
+//   map_received_ = true;
+// }
 
 void LocalHardLayer::activate()
 {
@@ -205,19 +200,6 @@ void LocalHardLayer::updateBounds(double robot_x, double robot_y, double robot_y
   if (!map_received_ || !has_updated_data_)
     return;
 
-  // double xDiff = origin_x_ - bufferCostmap_->info.origin.position.x;
-  // double yDiff = origin_y_ - bufferCostmap_->info.origin.position.y;
-  // double buf_resolution = bufferCostmap_->info.resolution;
-  // double x = 0, y = 0;
-  // x = x_ * buf_resolution;
-  // y = y_ * buf_resolution;
-  // x -= xDiff;
-  // y -= yDiff;
-  // x_ = static_cast<int>(round(x / resolution_));
-  // y_ = static_cast<int>(round(y / resolution_));
-  // width_ = static_cast<int>(round(width_ * buf_resolution / resolution_));
-  // height_ = static_cast<int>(round(height_ * buf_resolution / resolution_));
-
   double mx, my;
   // convert from map coordinates to world coordinates
   // x_, y_ are the map coordinates mx, my are the world coordinates
@@ -238,19 +220,8 @@ void LocalHardLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, 
     return;
   if (!enabled_)
     return;
-  unsigned char* master = master_grid.getCharMap();
-  unsigned int span = master_grid.getSizeInCellsX();
 
-  for (int j = min_j; j < max_j; j++)
-  {
-    unsigned int it = span*j+min_i;
-    for (int i = min_i; i < max_i; i++)
-    {
-      if (bufferCostmap_->data[it] != unknown_cost_value_)
-        master[it] = interpretValue(bufferCostmap_->data[it]);
-      it++;
-    }
-  }
+	updateWithOverwrite(master_grid, min_i, min_j, max_i, max_j);
 }
 
 bool LocalHardLayer::alignWithNewMap(const nav_msgs::OccupancyGridConstPtr& in,
