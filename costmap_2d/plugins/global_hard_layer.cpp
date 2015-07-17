@@ -77,24 +77,25 @@ uint8_t GlobalHardLayer::interpretValue(int8_t value)
 
 void GlobalHardLayer::visionHardCb(const nav_msgs::OccupancyGridConstPtr& hardPatch)
 {
+  boost::unique_lock<boost::shared_mutex> lock(*getLock());
   bufferUpdate(bufferCostmap_, hardPatch);
   has_updated_data_ = true;
-  if (size_x_ == bufferCostmap_->info.width &&
-      size_y_ == bufferCostmap_->info.height &&
-      resolution_ == bufferCostmap_->info.resolution &&
-      origin_x_ == bufferCostmap_->info.origin.position.x &&
-      origin_y_ == bufferCostmap_->info.origin.position.y)
-  {
-    if (has_updated_data_)
-    {
-      boost::unique_lock<boost::shared_mutex> lock(*getLock());
+  // if (size_x_ == bufferCostmap_->info.width &&
+  //     size_y_ == bufferCostmap_->info.height &&
+  //     resolution_ == bufferCostmap_->info.resolution &&
+  //     origin_x_ == bufferCostmap_->info.origin.position.x &&
+  //     origin_y_ == bufferCostmap_->info.origin.position.y)
+  // {
+  //   if (has_updated_data_)
+  //   {
+  //     boost::unique_lock<boost::shared_mutex> lock(*getLock());
 
-      for (int xx = 0; xx < bufferCostmap_->data.size(); ++xx)
-      {
-        costmap_[xx] = interpretValue(bufferCostmap_->data[xx]);
-      }
-    }
-  }
+  //     for (int xx = 0; xx < bufferCostmap_->data.size(); ++xx)
+  //     {
+  //       costmap_[xx] = interpretValue(bufferCostmap_->data[xx]);
+  //     }
+  //   }
+  // }
 }
 
 void GlobalHardLayer::bufferUpdate(const nav_msgs::OccupancyGridPtr& buffer,
@@ -116,8 +117,8 @@ void GlobalHardLayer::bufferUpdate(const nav_msgs::OccupancyGridPtr& buffer,
       y = jj * patch->info.resolution;
       xn = cos(yawDiff) * x - sin(yawDiff) * y - xDiff;
       yn = sin(yawDiff) * x + cos(yawDiff) * y - yDiff;
-      int coords = static_cast<int>(round(xn / buffer->info.resolution) +
-            round(yn * buffer->info.width / buffer->info.resolution));
+      int coords = static_cast<int>(round(xn / buffer->info.resolution)) +
+            static_cast<int>(round(yn / buffer->info.resolution)) * buffer->info.width;
       if ((coords > buffer->data.size()) || (coords < 0))
       {
         ROS_ERROR("Error resizing patch to buffer.");
@@ -127,7 +128,7 @@ void GlobalHardLayer::bufferUpdate(const nav_msgs::OccupancyGridPtr& buffer,
         uint8_t temp = patch->data[ii + jj * patch->info.width];
         if (temp != unknown_cost_value_)
           buffer->data[coords] = temp;
-        mapDilation(buffer, 2, coords);
+        mapDilation(buffer, 1, coords);
       }
 
       // if (ii == 0 && jj == 0)
@@ -151,27 +152,32 @@ void GlobalHardLayer::slamCb(const nav_msgs::OccupancyGridConstPtr& slamMap)
       master->getOriginY() != slamMap->info.origin.position.y)
       // !layered_costmap_->isSizeLocked())
   {
-    return;
+    layered_costmap_->resizeMap(slamMap->info.width, slamMap->info.height,
+        slamMap->info.resolution, slamMap->info.origin.position.x,
+        slamMap->info.origin.position.y, true);
   }
-  else if(size_x_ != slamMap->info.width || size_y_ != slamMap->info.height ||
-      resolution_ != slamMap->info.resolution ||
-      origin_x_ != slamMap->info.origin.position.x ||
-      origin_y_ != slamMap->info.origin.position.y)
-  {
-    matchSize();
-  }
+  // else if(size_x_ != slamMap->info.width || size_y_ != slamMap->info.height ||
+  //     resolution_ != slamMap->info.resolution ||
+  //     origin_x_ != slamMap->info.origin.position.x ||
+  //     origin_y_ != slamMap->info.origin.position.y)
+  // {
+  //   matchSize();
+  // }
 
-  bool changed = alignWithNewMap(slamMap, bufferCostmap_);
-
-  if (has_updated_data_ || changed)
   {
     boost::unique_lock<boost::shared_mutex> lock(*getLock());
-
-    for (int xx = 0; xx < bufferCostmap_->data.size(); ++xx)
-    {
-      costmap_[xx] = interpretValue(bufferCostmap_->data[xx]);
-    }
+    alignWithNewMap(slamMap, bufferCostmap_);
   }
+
+  // if (has_updated_data_ || changed)
+  // {
+  //   boost::unique_lock<boost::shared_mutex> lock(*getLock());
+
+  //   for (int xx = 0; xx < bufferCostmap_->data.size(); ++xx)
+  //   {
+  //     costmap_[xx] = interpretValue(bufferCostmap_->data[xx]);
+  //   }
+  // }
 
   map_received_ = true;
 }
@@ -230,7 +236,21 @@ void GlobalHardLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i,
 {
   if (!map_received_)
     return;
-  updateWithOverwrite(master_grid, min_i, min_j, max_i, max_j);
+  if (!enabled_)
+    return;
+  unsigned char* master = master_grid.getCharMap();
+  unsigned int span = master_grid.getSizeInCellsX();
+
+  for (int j = min_j; j < max_j; j++)
+  {
+    unsigned int it = span*j+min_i;
+    for (int i = min_i; i < max_i; i++)
+    {
+      if (bufferCostmap_->data[it] != unknown_cost_value_)
+        master[it] = interpretValue(bufferCostmap_->data[it]);
+      it++;
+    }
+  }
 }
 
 bool GlobalHardLayer::alignWithNewMap(const nav_msgs::OccupancyGridConstPtr& in,
@@ -274,8 +294,8 @@ bool GlobalHardLayer::alignWithNewMap(const nav_msgs::OccupancyGridConstPtr& in,
           y = jj * oldMetaData.resolution;
           xn = cos(yawDiff) * x - sin(yawDiff) * y - xDiff;
           yn = sin(yawDiff) * x + cos(yawDiff) * y - yDiff;
-          int coords = static_cast<int>(round(xn / out->info.resolution) +
-                round(yn * out->info.width / out->info.resolution));
+          int coords = static_cast<int>(round(xn / out->info.resolution)) +
+                static_cast<int>(round(yn / out->info.resolution)) * out->info.width;
           if ((coords > newSize) || (coords < 0))
           {
             ROS_WARN("Error resizing to: %d\nCoords Xn: %f, Yn: %f\n", newSize, xn, yn);
@@ -285,6 +305,26 @@ bool GlobalHardLayer::alignWithNewMap(const nav_msgs::OccupancyGridConstPtr& in,
             uint8_t temp = oldMap[ii + jj * oldMetaData.width];
             out->data[coords] = temp;
             mapDilation(out, 2, coords);
+          }
+        }
+      }
+
+      unsigned int widthDiff = fabs(floor(xDiff / out->info.resolution));
+      unsigned int heightDiff = fabs(floor(yDiff / out->info.resolution));
+
+      for (unsigned int ii = 0; ii < out->info.width; ++ii) {
+        for (unsigned int jj = 0; jj < out->info.height; ++jj) {
+          if (ii >= oldMetaData.width + widthDiff ||
+              jj >= oldMetaData.height + heightDiff)
+            out->data[ii + jj * out->info.width] = unknown_cost_value_;
+        }
+      }
+      if (widthDiff != 0 || heightDiff != 0)
+      {
+        for (unsigned int ii = 0; ii < out->info.width; ++ii) {
+          for (unsigned int jj = 0; jj < out->info.height; ++jj) {
+            if (ii < widthDiff || jj < heightDiff)
+              out->data[ii + jj * out->info.width] = unknown_cost_value_;
           }
         }
       }
