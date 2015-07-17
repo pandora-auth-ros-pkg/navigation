@@ -1,5 +1,5 @@
-#ifndef SOFT_PATCH_LAYER_H_
-#define SOFT_PATCH_LAYER_H_
+#ifndef LOCAL_SOFT_LAYER_H_
+#define LOCAL_SOFT_LAYER_H_
 #include <ros/ros.h>
 #include <costmap_2d/costmap_layer.h>
 #include <costmap_2d/layered_costmap.h>
@@ -10,10 +10,10 @@
 namespace costmap_2d
 {
 
-class SoftPatchLayer : public CostmapLayer
+class LocalSoftLayer : public CostmapLayer
 {
 public:
-  SoftPatchLayer();
+  LocalSoftLayer();
 
   virtual void onInitialize();
   virtual void updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x, double* min_y, double* max_x,

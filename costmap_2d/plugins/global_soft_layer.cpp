@@ -1,7 +1,7 @@
-#include <costmap_2d/global_patch_layer.h>
+#include <costmap_2d/global_soft_layer.h>
 #include <pluginlib/class_list_macros.h>
 
-PLUGINLIB_EXPORT_CLASS(costmap_2d::GlobalPatchLayer, costmap_2d::Layer)
+PLUGINLIB_EXPORT_CLASS(costmap_2d::GlobalSoftLayer, costmap_2d::Layer)
 
 using costmap_2d::LETHAL_OBSTACLE;
 using costmap_2d::NO_INFORMATION;
@@ -10,9 +10,9 @@ using costmap_2d::FREE_SPACE;
 namespace costmap_2d
 {
 
-GlobalPatchLayer::GlobalPatchLayer() :dsrv_(NULL) {}
+GlobalSoftLayer::GlobalSoftLayer() :dsrv_(NULL) {}
 
-void GlobalPatchLayer::onInitialize()
+void GlobalSoftLayer::onInitialize()
 {
   ros::NodeHandle nh("~/" + name_), g_nh;
   current_ = true;
@@ -32,7 +32,7 @@ void GlobalPatchLayer::onInitialize()
 
   //we'll subscribe to the latched topic that the map server uses
   ROS_INFO("Requesting the map...");
-  map_sub_ = g_nh.subscribe(map_topic, 1, &GlobalPatchLayer::incomingMap, this);
+  map_sub_ = g_nh.subscribe(map_topic, 1, &GlobalSoftLayer::incomingMap, this);
   map_received_ = false;
   has_updated_data_ = false;
 
@@ -52,13 +52,13 @@ void GlobalPatchLayer::onInitialize()
 
   dsrv_ = new dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>(nh);
   dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>::CallbackType cb = boost::bind(
-      &GlobalPatchLayer::reconfigureCB, this, _1, _2);
+      &GlobalSoftLayer::reconfigureCB, this, _1, _2);
   dsrv_->setCallback(cb);
 }
 
 
 
-void GlobalPatchLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y,
+void GlobalSoftLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y,
                                         double* max_x, double* max_y)
 {
   if (!map_received_ || !has_updated_data_)
@@ -79,7 +79,7 @@ void GlobalPatchLayer::updateBounds(double robot_x, double robot_y, double robot
 
 }
 
-void GlobalPatchLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j)
+void GlobalSoftLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j)
 {
   if (!map_received_)
     return;
@@ -87,24 +87,24 @@ void GlobalPatchLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i
   updateWithOverwrite(master_grid, min_i, min_j, max_i, max_j);
 }
 
-void GlobalPatchLayer::matchSize()
+void GlobalSoftLayer::matchSize()
 {
   Costmap2D* master = layered_costmap_->getCostmap();
   resizeMap(master->getSizeInCellsX(), master->getSizeInCellsY(), master->getResolution(),
             master->getOriginX(), master->getOriginY());
 }
 
-void GlobalPatchLayer::activate()
+void GlobalSoftLayer::activate()
 {
     onInitialize();
 }
 
-void GlobalPatchLayer::deactivate()
+void GlobalSoftLayer::deactivate()
 {
     map_sub_.shutdown();
 }
 
-void GlobalPatchLayer::reset()
+void GlobalSoftLayer::reset()
 {
     deactivate();
     activate();
@@ -112,7 +112,7 @@ void GlobalPatchLayer::reset()
 
 
 
-void GlobalPatchLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
+void GlobalSoftLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
 {
   unsigned int size_x = new_map->info.width, size_y = new_map->info.height;
 
@@ -155,7 +155,7 @@ void GlobalPatchLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_ma
   map_received_ = true;
   has_updated_data_ = true;
 }
-unsigned char GlobalPatchLayer::interpretValue(unsigned char value)
+unsigned char GlobalSoftLayer::interpretValue(unsigned char value)
 {
   //check if the static value is above the unknown or lethal thresholds
   if (value == unknown_cost_value_)
@@ -170,7 +170,7 @@ unsigned char GlobalPatchLayer::interpretValue(unsigned char value)
 }
 
 
-void GlobalPatchLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level)
+void GlobalSoftLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level)
 {
   enabled_ = config.enabled;
 }

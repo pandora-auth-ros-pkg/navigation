@@ -1,7 +1,7 @@
-#include <costmap_2d/soft_patch_layer.h>
+#include <costmap_2d/local_soft_layer.h>
 #include <pluginlib/class_list_macros.h>
 
-PLUGINLIB_EXPORT_CLASS(costmap_2d::SoftPatchLayer, costmap_2d::Layer)
+PLUGINLIB_EXPORT_CLASS(costmap_2d::LocalSoftLayer, costmap_2d::Layer)
 
 using costmap_2d::LETHAL_OBSTACLE;
 using costmap_2d::NO_INFORMATION;
@@ -10,9 +10,9 @@ using costmap_2d::FREE_SPACE;
 namespace costmap_2d
 {
 
-SoftPatchLayer::SoftPatchLayer() :dsrv_(NULL) {}
+LocalSoftLayer::LocalSoftLayer() :dsrv_(NULL) {}
 
-void SoftPatchLayer::onInitialize()
+void LocalSoftLayer::onInitialize()
 {
   ros::NodeHandle nh("~/" + name_), g_nh;
   current_ = true;
@@ -32,7 +32,7 @@ void SoftPatchLayer::onInitialize()
 
   //we'll subscribe to the latched topic that the map server uses
   ROS_INFO("Requesting the map...");
-  map_sub_ = g_nh.subscribe(map_topic, 1, &SoftPatchLayer::incomingMap, this);
+  map_sub_ = g_nh.subscribe(map_topic, 1, &LocalSoftLayer::incomingMap, this);
   map_received_ = false;
   has_updated_data_ = false;
 
@@ -52,13 +52,13 @@ void SoftPatchLayer::onInitialize()
 
   dsrv_ = new dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>(nh);
   dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>::CallbackType cb = boost::bind(
-      &SoftPatchLayer::reconfigureCB, this, _1, _2);
+      &LocalSoftLayer::reconfigureCB, this, _1, _2);
   dsrv_->setCallback(cb);
 }
 
 
 
-void SoftPatchLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y,
+void LocalSoftLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y,
                                         double* max_x, double* max_y)
 {
   if (!map_received_ || !has_updated_data_)
@@ -79,7 +79,7 @@ void SoftPatchLayer::updateBounds(double robot_x, double robot_y, double robot_y
 
 }
 
-void SoftPatchLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j)
+void LocalSoftLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j)
 {
   if (!map_received_)
     return;
@@ -87,24 +87,24 @@ void SoftPatchLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, 
   updateWithOverwrite(master_grid, min_i, min_j, max_i, max_j);
 }
 
-void SoftPatchLayer::matchSize()
+void LocalSoftLayer::matchSize()
 {
   Costmap2D* master = layered_costmap_->getCostmap();
   resizeMap(master->getSizeInCellsX(), master->getSizeInCellsY(), master->getResolution(),
             master->getOriginX(), master->getOriginY());
 }
 
-void SoftPatchLayer::activate()
+void LocalSoftLayer::activate()
 {
     onInitialize();
 }
 
-void SoftPatchLayer::deactivate()
+void LocalSoftLayer::deactivate()
 {
     map_sub_.shutdown();
 }
 
-void SoftPatchLayer::reset()
+void LocalSoftLayer::reset()
 {
     deactivate();
     activate();
@@ -125,7 +125,7 @@ void SoftPatchLayer::reset()
  * intersects the master_grid. If there is a section between those two, the arguments we passed by pointer
  * are going to be filled with the bounding box that defines the SECTION between the two maps.
  */
-bool SoftPatchLayer::mapIntersectsMaster(std::vector<unsigned int>* bounding_box)
+bool LocalSoftLayer::mapIntersectsMaster(std::vector<unsigned int>* bounding_box)
 {
   Costmap2D* master = layered_costmap_->getCostmap();
   if(master == NULL)
@@ -186,7 +186,7 @@ bool SoftPatchLayer::mapIntersectsMaster(std::vector<unsigned int>* bounding_box
 }
 
 
-void SoftPatchLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
+void LocalSoftLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
 {
   // A pointer to the master_grid
   Costmap2D* master = layered_costmap_->getCostmap();
@@ -286,7 +286,7 @@ void SoftPatchLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
 
 }
 
-unsigned char SoftPatchLayer::interpretValue(unsigned char value)
+unsigned char LocalSoftLayer::interpretValue(unsigned char value)
 {
   //check if the static value is above the unknown or lethal thresholds
   if (value == unknown_cost_value_)
@@ -301,7 +301,7 @@ unsigned char SoftPatchLayer::interpretValue(unsigned char value)
 }
 
 
-void SoftPatchLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level)
+void LocalSoftLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level)
 {
   enabled_ = config.enabled;
 }
