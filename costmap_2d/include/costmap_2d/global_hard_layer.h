@@ -88,6 +88,7 @@ private:
   std::string vision_hard_topic_;
   bool has_updated_data_;
 
+  ros::Publisher buffer_pub_;
   std::string global_frame_; ///< @brief The global frame for the costmap
 };
 }

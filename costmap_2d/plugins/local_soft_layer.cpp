@@ -251,32 +251,6 @@ void LocalSoftLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
       ++index;
     }
   }
-  /*if(!intersects)
-  {
-
-    for (unsigned int i = 0; i < master->getSizeInCellsY(); ++i)
-    {
-      for (unsigned int j = 0; j < master->getSizeInCellsX(); ++j)
-      {
-        //ROS_ERROR("Crash??");
-        costmap_[index] = NO_INFORMATION;
-        ++index;
-      }
-    }
-  }
-  // if we have an intersection we update the costmap with the intersected region
-
-  else
-  {
-    for (unsigned int i = 0; i < master->getSizeInCellsY(); ++i)
-    {
-      for (unsigned int j = 0; j < master->getSizeInCellsX(); ++j)
-      {
-        costmap_[index] = new_map->data[(i+yBoundLow) * master->getSizeInCellsX()  + (j+xBoundLow)];
-        ++index;
-      }
-    }
-  }*/
 
   x_ = y_ = 0;
   width_ = size_x_;

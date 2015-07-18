@@ -37,6 +37,8 @@ void GlobalHardLayer::onInitialize()
     ROS_BREAK();
   }
   vision_hard_sub_ = g_nh.subscribe(vision_hard_topic_, 1, &GlobalHardLayer::visionHardCb, this);
+  // Publish the buffer for visualization purposes and for the local hard patch
+  buffer_pub_ = g_nh.advertise<nav_msgs::OccupancyGrid>("global_hard_layer/buffer_occupancy_grid", 1);
 
   bufferCostmap_.reset( new nav_msgs::OccupancyGrid );
 
@@ -178,7 +180,7 @@ void GlobalHardLayer::slamCb(const nav_msgs::OccupancyGridConstPtr& slamMap)
   //     costmap_[xx] = interpretValue(bufferCostmap_->data[xx]);
   //   }
   // }
-
+  buffer_pub_.publish(bufferCostmap_);
   map_received_ = true;
 }
 
