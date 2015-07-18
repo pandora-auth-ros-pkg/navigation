@@ -35,8 +35,8 @@
  * Author: Eitan Marder-Eppstein
  *         David V. Lu!!
  *********************************************************************/
-#ifndef GLOBAL_HARD_LAYER_H_
-#define GLOBAL_HARD_LAYER_H_
+#ifndef LOCAL_HARD_LAYER_H_
+#define LOCAL_HARD_LAYER_H_
 #include <ros/ros.h>
 #include <costmap_2d/costmap_layer.h>
 #include <costmap_2d/layered_costmap.h>
@@ -48,49 +48,35 @@
 
 namespace costmap_2d
 {
-class GlobalHardLayer : public CostmapLayer
-{
-public:
-  GlobalHardLayer();
-  virtual void onInitialize();
-  virtual void activate();
-  virtual void deactivate();
-  virtual void reset();
+  class LocalHardLayer : public CostmapLayer
+  {
+  public:
+    LocalHardLayer();
+    virtual void onInitialize();
+    virtual void activate();
+    virtual void deactivate();
+    virtual void reset();
 
-  virtual void updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y, double* max_x,
-                             double* max_y);
-  virtual void updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
+    virtual void updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y, double* max_x,
+                               double* max_y);
+    virtual void updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
 
-private:
-  void slamCb(const nav_msgs::OccupancyGridConstPtr& slamMap);
-  void visionHardCb(const nav_msgs::OccupancyGridConstPtr& hardPatch);
+  private:
+    void globalHardCb(const nav_msgs::OccupancyGridConstPtr& hardPatch);
+    uint8_t interpretValue(int8_t value);
 
-  uint8_t interpretValue(int8_t value);
+  protected:
+    int mitsos_cost_value_;
+    int unknown_cost_value_;
 
-  bool alignWithNewMap(const nav_msgs::OccupancyGridConstPtr& in,
-      const nav_msgs::OccupancyGridPtr& out);
-  void bufferUpdate(const nav_msgs::OccupancyGridPtr& buffer,
-      const nav_msgs::OccupancyGridConstPtr& patch);
-  void mapDilation(const nav_msgs::OccupancyGridPtr& in,
-      int steps, int coords,
-      nav_msgs::OccupancyGridConstPtr checkMap = nav_msgs::OccupancyGridPtr());
+  private:
+    bool map_received_;
+    unsigned int x_,y_,width_,height_;
+    ros::Subscriber global_hard_sub_;
+    std::string global_hard_topic_;
+    bool has_updated_data_;
 
-protected:
-  nav_msgs::OccupancyGridPtr bufferCostmap_;
-  int unknown_cost_value_;
-  int mitsos_cost_value_;
-private:
-  ros::Subscriber slam_map_sub_;
-  std::string slam_map_topic_;
-  bool map_received_;
-
-  ros::Subscriber vision_hard_sub_;
-  std::string vision_hard_topic_;
-  bool has_updated_data_;
-
-  // Publisher of the buffer
-  ros::Publisher buffer_pub_;
-  std::string global_frame_; ///< @brief The global frame for the costmap
-};
+    std::string global_frame_; ///< @brief The global frame for the costmap
+  };
 }
 #endif

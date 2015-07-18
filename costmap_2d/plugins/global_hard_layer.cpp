@@ -39,6 +39,9 @@ void GlobalHardLayer::onInitialize()
   }
   vision_hard_sub_ = g_nh.subscribe(vision_hard_topic_, 1, &GlobalHardLayer::visionHardCb, this);
 
+  // Publish the buffer for visualization purposes and for the local hard patch
+  buffer_pub_ = g_nh.advertise<nav_msgs::OccupancyGrid>("global_hard_layer/buffer_occupancy_grid", 1);
+
   bufferCostmap_.reset( new nav_msgs::OccupancyGrid );
 
   ROS_INFO("Requesting the map...");
@@ -83,22 +86,7 @@ void GlobalHardLayer::visionHardCb(const nav_msgs::OccupancyGridConstPtr& hardPa
   boost::unique_lock<boost::shared_mutex> lock(*getLock());
   bufferUpdate(bufferCostmap_, hardPatch);
   has_updated_data_ = true;
-  // if (size_x_ == bufferCostmap_->info.width &&
-  //     size_y_ == bufferCostmap_->info.height &&
-  //     resolution_ == bufferCostmap_->info.resolution &&
-  //     origin_x_ == bufferCostmap_->info.origin.position.x &&
-  //     origin_y_ == bufferCostmap_->info.origin.position.y)
-  // {
-  //   if (has_updated_data_)
-  //   {
-  //     boost::unique_lock<boost::shared_mutex> lock(*getLock());
 
-  //     for (int xx = 0; xx < bufferCostmap_->data.size(); ++xx)
-  //     {
-  //       costmap_[xx] = interpretValue(bufferCostmap_->data[xx]);
-  //     }
-  //   }
-  // }
 }
 
 void GlobalHardLayer::bufferUpdate(const nav_msgs::OccupancyGridPtr& buffer,
@@ -134,15 +122,9 @@ void GlobalHardLayer::bufferUpdate(const nav_msgs::OccupancyGridPtr& buffer,
         mapDilation(buffer, 1, coords);
       }
 
-      // if (ii == 0 && jj == 0)
-      // {
-      //   x_ = static_cast<int>(round(xn / buffer->info.resolution));
-      //   y_ = static_cast<int>(round(yn / buffer->info.resolution));
-      // }
     }
   }
-  // width_ = static_cast<int>(round(patch->info.width * patch->info.resolution / buffer->info.resolution));
-  // height_ = static_cast<int>(round(patch->info.height * patch->info.resolution / buffer->info.resolution));
+
 }
 
 void GlobalHardLayer::slamCb(const nav_msgs::OccupancyGridConstPtr& slamMap)
@@ -159,29 +141,13 @@ void GlobalHardLayer::slamCb(const nav_msgs::OccupancyGridConstPtr& slamMap)
         slamMap->info.resolution, slamMap->info.origin.position.x,
         slamMap->info.origin.position.y, true);
   }
-  // else if(size_x_ != slamMap->info.width || size_y_ != slamMap->info.height ||
-  //     resolution_ != slamMap->info.resolution ||
-  //     origin_x_ != slamMap->info.origin.position.x ||
-  //     origin_y_ != slamMap->info.origin.position.y)
-  // {
-  //   matchSize();
-  // }
 
   {
     boost::unique_lock<boost::shared_mutex> lock(*getLock());
     alignWithNewMap(slamMap, bufferCostmap_);
   }
 
-  // if (has_updated_data_ || changed)
-  // {
-  //   boost::unique_lock<boost::shared_mutex> lock(*getLock());
-
-  //   for (int xx = 0; xx < bufferCostmap_->data.size(); ++xx)
-  //   {
-  //     costmap_[xx] = interpretValue(bufferCostmap_->data[xx]);
-  //   }
-  // }
-
+  buffer_pub_.publish(bufferCostmap_);
   map_received_ = true;
 }
 
@@ -207,19 +173,6 @@ void GlobalHardLayer::updateBounds(double robot_x, double robot_y, double robot_
 {
   if (!map_received_ || !has_updated_data_)
     return;
-
-  // double xDiff = origin_x_ - bufferCostmap_->info.origin.position.x;
-  // double yDiff = origin_y_ - bufferCostmap_->info.origin.position.y;
-  // double buf_resolution = bufferCostmap_->info.resolution;
-  // double x = 0, y = 0;
-  // x = x_ * buf_resolution;
-  // y = y_ * buf_resolution;
-  // x -= xDiff;
-  // y -= yDiff;
-  // x_ = static_cast<int>(round(x / resolution_));
-  // y_ = static_cast<int>(round(y / resolution_));
-  // width_ = static_cast<int>(round(width_ * buf_resolution / resolution_));
-  // height_ = static_cast<int>(round(height_ * buf_resolution / resolution_));
 
   double mx, my;
   // convert from map coordinates to world coordinates
