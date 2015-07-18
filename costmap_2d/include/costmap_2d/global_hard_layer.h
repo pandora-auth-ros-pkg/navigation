@@ -78,7 +78,7 @@ private:
 protected:
   nav_msgs::OccupancyGridPtr bufferCostmap_;
   int unknown_cost_value_;
-
+  int mitsos_cost_value_;
 private:
   ros::Subscriber slam_map_sub_;
   std::string slam_map_topic_;

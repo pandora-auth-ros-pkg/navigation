@@ -21,6 +21,7 @@ void GlobalHardLayer::onInitialize()
 
   setDefaultValue(NO_INFORMATION);
   nh.param<int>("unknown_cost_value", unknown_cost_value_, 51);
+  nh.param<int>("mitsos_cost_value", mitsos_cost_value_, 50);
 
   global_frame_ = layered_costmap_->getGlobalFrameID();
 
@@ -69,6 +70,8 @@ uint8_t GlobalHardLayer::interpretValue(int8_t value)
   //check if the static value is above the unknown or lethal thresholds
   if (value == unknown_cost_value_)
     return NO_INFORMATION;
+  else if(value == mitsos_cost_value_)
+    return INSCRIBED_INFLATED_OBSTACLE;
   else if (value > unknown_cost_value_)
     return LETHAL_OBSTACLE;
   else
