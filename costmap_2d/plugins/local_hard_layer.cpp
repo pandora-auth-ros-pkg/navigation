@@ -114,8 +114,7 @@ namespace costmap_2d
 
   void LocalHardLayer::deactivate()
   {
-    slam_map_sub_.shutdown();
-    vision_hard_sub_.shutdown();
+    global_hard_sub_.shutdown();
   }
 
   void LocalHardLayer::reset()

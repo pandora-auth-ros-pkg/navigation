@@ -1,5 +1,5 @@
-#ifndef SOFT_PATCH_LAYER_H_
-#define SOFT_PATCH_LAYER_H_
+#ifndef GLOBAL_SOFT_LAYER_H_
+#define GLOBAL_SOFT_LAYER_H_
 #include <ros/ros.h>
 #include <costmap_2d/costmap_layer.h>
 #include <costmap_2d/layered_costmap.h>
@@ -10,10 +10,10 @@
 namespace costmap_2d
 {
 
-class SoftPatchLayer : public CostmapLayer
+class GlobalSoftLayer : public CostmapLayer
 {
 public:
-  SoftPatchLayer();
+  GlobalSoftLayer();
 
   virtual void onInitialize();
   virtual void updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x, double* min_y, double* max_x,
@@ -37,8 +37,6 @@ private:
 
   unsigned char interpretValue(unsigned char value);
 
-  bool mapIntersectsMaster(std::vector<unsigned int>* bounding_box);
-
   void reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level);
 
   dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig> *dsrv_;
@@ -55,5 +53,5 @@ private:
   mutable boost::recursive_mutex lock_;
 
 };
-}
-#endif
+}  // namespace costmap_2d
+#endif  // GLOBAL_SOFT_LAYER_H_
