@@ -18,6 +18,8 @@ void GlobalSoftLayer::onInitialize()
   current_ = true;
 
   global_frame_ = layered_costmap_->getGlobalFrameID();
+  // To prevent flickering, if not set to default it contains garbage
+  setDefaultValue(NO_INFORMATION);
 
   std::string map_topic;
   nh.param("map_topic", map_topic, std::string("map"));
