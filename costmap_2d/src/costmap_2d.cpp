@@ -44,7 +44,7 @@ namespace costmap_2d
 {
 Costmap2D::Costmap2D(unsigned int cells_size_x, unsigned int cells_size_y, double resolution,
                      double origin_x, double origin_y, unsigned char default_value) :
-    size_x_(cells_size_x), size_y_(cells_size_y), resolution_(resolution), origin_x_(origin_x), 
+    size_x_(cells_size_x), size_y_(cells_size_y), resolution_(resolution), origin_x_(origin_x),
     origin_y_(origin_y), costmap_(NULL), default_value_(default_value)
 {
   access_ = new boost::shared_mutex();
@@ -213,7 +213,7 @@ bool Costmap2D::worldToMap(double wx, double wy, unsigned int& mx, unsigned int&
   if (mx < size_x_ && my < size_y_)
     return true;
 
-  printf("Yoooo! \n");
+  //printf("Yoooo! \n");
   return false;
 }
 
