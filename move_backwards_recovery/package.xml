@@ -1,0 +1,34 @@
+<package>
+    <name>move_backwards_recovery</name>
+    <version>0.1.0</version>
+    <description>
+
+        move_backwards_recovery
+
+    </description>
+    <author>Dimitris Geromichalos</author>
+    <maintainer email="geromidg@gmail.com">Dimitris Geromichalos</maintainer>
+    <license>BSD</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <build_depend>cmake_modules</build_depend>
+    <build_depend>roscpp</build_depend>
+    <build_depend>nav_core</build_depend>
+    <build_depend>costmap_2d</build_depend>
+    <build_depend>geometry_msgs</build_depend>
+    <build_depend>pluginlib</build_depend>
+    <build_depend>pluginlib</build_depend>
+
+    <run_depend>roscpp</run_depend>
+    <run_depend>nav_core</run_depend>
+    <run_depend>costmap_2d</run_depend>
+    <run_depend>geometry_msgs</run_depend>
+    <run_depend>pluginlib</run_depend>
+    <run_depend>pluginlib</run_depend>
+
+    <export>
+        <nav_core plugin="${prefix}/move_backwards_recovery_plugin.xml" />
+    </export>
+
+</package>
