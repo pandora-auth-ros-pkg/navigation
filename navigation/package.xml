@@ -10,7 +10,7 @@
     <maintainer email="fergs@unboundedrobotics.com">Michael Ferguson</maintainer>
     <author>contradict@gmail.com</author>
     <author>Eitan Marder-Eppstein</author>
-    <license>BSD,LGPL,LGPL (amcl)</license>  
+    <license>BSD,LGPL,LGPL (amcl)</license>
     <url>http://wiki.ros.org/navigation</url>
 
     <buildtool_depend>catkin</buildtool_depend>
@@ -23,6 +23,7 @@
     <run_depend>robot_pose_ekf</run_depend>
     <run_depend>base_local_planner</run_depend>
     <run_depend>clear_costmap_recovery</run_depend>
+    <run_depend>move_backwards_recovery</run_depend>
     <run_depend>fake_localization</run_depend>
     <run_depend>move_base_msgs</run_depend>
     <run_depend>navfn</run_depend>
