@@ -120,7 +120,7 @@ void GlobalHardLayer::bufferUpdate(const nav_msgs::OccupancyGridPtr& buffer,
         uint8_t temp = patch->data[ii + jj * patch->info.width];
         if (temp != unknown_cost_value_)
           buffer->data[coords] = temp;
-        mapDilation(buffer, 1, coords);
+        //mapDilation(buffer, 1, coords);
       }
 
     }
@@ -261,7 +261,7 @@ bool GlobalHardLayer::alignWithNewMap(const nav_msgs::OccupancyGridConstPtr& in,
           {
             uint8_t temp = oldMap[ii + jj * oldMetaData.width];
             out->data[coords] = temp;
-            mapDilation(out, 2, coords);
+            //mapDilation(out, 2, coords);
           }
         }
       }
