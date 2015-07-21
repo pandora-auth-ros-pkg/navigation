@@ -1,12 +1,12 @@
-#include <move_backwards_recovery/collision_recovery.h>
+#include <collision_recovery/collision_recovery.h>
 #include <pluginlib/class_list_macros.h>
 #include <costmap_2d/obstacle_layer.h>
 
 
-PLUGINLIB_DECLARE_CLASS(collsion_recovery, CollisionRecovery, move_backwards_recovery::CollisionRecovery,
+PLUGINLIB_DECLARE_CLASS(collsion_recovery, CollisionRecovery, collision_recovery::CollisionRecovery,
     nav_core::RecoveryBehavior)
 
-namespace move_backwards_recovery
+namespace collision_recovery
 {
   CollisionRecovery::CollisionRecovery(): global_costmap_(NULL), local_costmap_(NULL),
     initialized_(false) {}
