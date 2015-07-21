@@ -66,6 +66,17 @@ namespace collision_recovery
 
     std::cout<<"Footprint Collision Vector Before"<<footprint_collision_[0]<<footprint_collision_[1]<<footprint_collision_[2]<<footprint_collision_[3];
     std::vector<geometry_msgs::Point> footprint = global_costmap_->getRobotFootprint();
+    std::cout<<footprint[0]<<std::endl;
+    std::cout<<footprint[1]<<std::endl;
+    std::cout<<footprint[2]<<std::endl;
+    std::cout<<footprint[3]<<std::endl;
+
+    footprint = local_costmap_->getRobotFootprint();
+    std::cout<<footprint[0]<<std::endl;
+    std::cout<<footprint[1]<<std::endl;
+    std::cout<<footprint[2]<<std::endl;
+    std::cout<<footprint[3]<<std::endl;
+
     createFootprintCollision(footprint);
     std::cout<<"Footprint Collision Vector After"<<footprint_collision_[0]<<footprint_collision_[1]<<footprint_collision_[2]<<footprint_collision_[3];
 
