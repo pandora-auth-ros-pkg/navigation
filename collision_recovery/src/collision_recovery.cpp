@@ -187,7 +187,10 @@ namespace collision_recovery
   {
     unsigned char cost = global_costmap_->getCostmap()->getCost(x,y);
     if(cost == costmap_2d::LETHAL_OBSTACLE || cost == costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
+    {
+      ROS_INFO("Point in collision");
       return -1;
+    }
     else
       return 0;
   }
