@@ -28,10 +28,8 @@ namespace collision_recovery
       lines_ = false;
       yolo = false;
       ros::NodeHandle private_nh_("~/" + name);
-      private_nh_.param("linear_escape_vel", linear_escape_vel_, 0.3);
+      private_nh_.param("linear_escape_vel", linear_escape_vel_, 0.2);
       private_nh_.param("angular_escape_vel", angular_escape_vel_, 0.2);
-      linear_escape_vel_ = 0.3;
-      angular_escape_vel_ = 0.2;
       std::string planner_namespace;
       private_nh_.param("planner_namespace", planner_namespace, std::string("DWAPlannerROS"));
       planner_nh_ = ros::NodeHandle("~/" + planner_namespace);
@@ -64,12 +62,7 @@ namespace collision_recovery
     ros::NodeHandle n;
     ros::Publisher vel_pub = n.advertise<geometry_msgs::Twist>("cmd_vel", 10);
 
-    /** Recovery **/
     geometry_msgs::Twist cmd_vel;
-
-    std::cout<<"Footprint Collision Vector Before"<<footprint_collision_[0]<<footprint_collision_[1]
-    <<footprint_collision_[2]<<footprint_collision_[3]<<std::endl;
-
 
     if(footprint_collision_.size() != 0)
     {
@@ -145,19 +138,14 @@ namespace collision_recovery
       }
       else
       {
+        ros::Rate r(0.5);
+        ros::NodeHandle n;
         int index = 0;
-        while(index<=3)
+        while (n.ok() && index < 3)
         {
           std::vector<geometry_msgs::Point> footprint;
           global_costmap_->getOrientedFootprint(footprint);
-          std::cout<<footprint[0]<<std::endl;
-          std::cout<<footprint[1]<<std::endl;
-          std::cout<<footprint[2]<<std::endl;
-          std::cout<<footprint[3]<<std::endl;
-          std::cout<<"Before create footprint Collision"<<std::endl;
           createFootprintCollision(footprint);
-          std::cout<<"Footprint Collision Vector After"<<footprint_collision_[0]
-          <<footprint_collision_[1]<<footprint_collision_[2]<<footprint_collision_[3]<<std::endl;
 
           // if -1 collision, if 0 not
           int back_right = footprint_collision_.at(0);
@@ -170,38 +158,29 @@ namespace collision_recovery
             cmd_vel.linear.x = -linear_escape_vel_;
             cmd_vel.linear.y = 0.0;
             cmd_vel.angular.z = 0.0;
-            ROS_WARN("[collision_recovery] You really messed this up dude! Going back #YOLO vel_x[%f]",cmd_vel.linear.x);
+            ROS_WARN("[collision_recovery] You really messed this up dude! #YOLO, going back with vel_x[%f]",cmd_vel.linear.x);
           }
           if(back_right == -1 && back_left == -1 && front_left == 0 && front_right == 0)
           {
             cmd_vel.linear.x = linear_escape_vel_;
             cmd_vel.linear.y = 0.0;
             cmd_vel.angular.z = 0.0;
-            ROS_WARN("[collision_recovery] Back Left and Back Right in collision going forward vel_x[%f]", cmd_vel.linear.x);
+            ROS_WARN("[collision_recovery] back_left and back_right in collision, going forward with vel_x[%f]", cmd_vel.linear.x);
           }
           if(back_right == -1 && back_left == 0 && front_left == 0 && front_right == -1)
           {
-            cmd_vel.linear.x = -linear_escape_vel_;
+            cmd_vel.linear.x = 0.0;
             cmd_vel.linear.y = 0.0;
             cmd_vel.angular.z = angular_escape_vel_;
-            ROS_WARN("[collision_recovery] Back Right Front Right in collision, turning back left vel_x[%f], ang_z[%f]", cmd_vel.linear.x, cmd_vel.angular.z);
+            ROS_WARN("[collision_recovery] back_right and front_right in collision, turning left with ang_z[%f]", cmd_vel.angular.z);
           }
 
           if(back_right == 0 && back_left == -1 && front_left == -1 && front_right == 0)
           {
-            cmd_vel.linear.x = linear_escape_vel_;
+            cmd_vel.linear.x = 0.0;
             cmd_vel.linear.y = 0.0;
             cmd_vel.angular.z = -angular_escape_vel_;
-            ROS_WARN("[collision_recovery] Back Left Front left in collision, turning back right vel_x[%f], ang_z[%f]", cmd_vel.linear.x, cmd_vel.angular.z);
-          }
-
-
-          if(back_right == 0 && back_left == -1 && front_left == -1 && front_right == -1)
-          {
-            cmd_vel.linear.x = -linear_escape_vel_;
-            cmd_vel.linear.y = 0.0;
-            cmd_vel.angular.z = -angular_escape_vel_;
-            ROS_WARN("[collision_recovery] Only back_right free, going back right vel_x[%f], ang_z[%f]", cmd_vel.linear.x, cmd_vel.angular.z);
+            ROS_WARN("[collision_recovery] back_left and front_left in collision, turning right with ang_z[%f]", cmd_vel.angular.z);
           }
 
           if(back_right == 0 && back_left == 0 && front_left == -1 && front_right == -1)
@@ -209,19 +188,32 @@ namespace collision_recovery
             cmd_vel.linear.x = -linear_escape_vel_;
             cmd_vel.linear.y = 0.0;
             cmd_vel.angular.z = 0.0;
-            ROS_WARN("[collision_recovery] Front left and right in collision, going back vel_x[%f]", cmd_vel.linear.x);
+            ROS_WARN("[collision_recovery] front_left and front_right in collision, going with back vel_x[%f]", cmd_vel.linear.x);
           }
+
+          /*
+          if(back_right == 0 && back_left == -1 && front_left == -1 && front_right == -1)
+          {
+            cmd_vel.linear.x = -linear_escape_vel_;
+            cmd_vel.linear.y = 0.0;
+            cmd_vel.angular.z = -angular_escape_vel_;
+            ROS_WARN("[collision_recovery] Only back_right free, going back right with vel_x[%f] and ang_z[%f]", cmd_vel.linear.x, cmd_vel.angular.z);
+          }
+          */
 
           if(back_right == 0 && back_left == 0 && front_left == 0 && front_right == 0)
           {
             cmd_vel.linear.x = 0.0;
             cmd_vel.linear.y = 0.0;
             cmd_vel.angular.z = 0.0;
-            ROS_WARN("[collision_recovery] Ta triatafila einai kokkina oi toulipes einai ple, tsifsa rop ki ola kople, tpt den xtypaei");
+            ROS_WARN("[collision_recovery] Unstuck!");
             break;
           }
-          index++;
+
           vel_pub.publish(cmd_vel);
+          r.sleep();
+
+          index++;
         }
 
       }
@@ -240,47 +232,37 @@ namespace collision_recovery
   std::vector<int> CollisionRecovery::createFootprintCollision(
     std::vector<geometry_msgs::Point>& footprint)
   {
-    std::cout<<"Size of footprint collision vector:"<<footprint.size()<<std::endl;
     if(footprint.size() == 4)
     {
       if(lines_ == true)
       {
         // check back line for collision
-        ROS_ERROR("Checking Back Line");
         footprint_collision_.at(0) = lineInCollision(footprint.at(0), footprint.at(1));
 
         // check left line for collision
-        ROS_ERROR("Checking Left Line");
         footprint_collision_.at(1) = lineInCollision(footprint.at(1), footprint.at(2));
 
         // check front line for collision
-        ROS_ERROR("Checking Front Line");
         footprint_collision_.at(2) = lineInCollision(footprint.at(2), footprint.at(3));
 
         // check right line for collision
-        ROS_ERROR("Checking Right Line");
         footprint_collision_.at(3) = lineInCollision(footprint.at(3), footprint.at(0));
 
       }
       else
       {
         // check back right point for collision
-        ROS_ERROR("Checking Back Right point");
         footprint_collision_.at(0) = pointInCollision(footprint.at(0).x, footprint.at(0).y);
 
         // check back left point for collision
-        ROS_ERROR("Checking Back Left point");
         footprint_collision_.at(1) = pointInCollision(footprint.at(1).x, footprint.at(1).y);
 
         // check front line for collision
-        ROS_ERROR("Checking Front Left point");
         footprint_collision_.at(2) = pointInCollision(footprint.at(2).x, footprint.at(2).y);
 
         // check right line for collision
-        ROS_ERROR("Checking Front Right point");
         footprint_collision_.at(3) = pointInCollision(footprint.at(3).x, footprint.at(3).y);
       }
-
 
     }
     else
@@ -298,7 +280,6 @@ namespace collision_recovery
     unsigned char cost = global_costmap_->getCostmap()->getCost(mx, my);
     if(cost == costmap_2d::LETHAL_OBSTACLE || cost == costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
     {
-      ROS_INFO("Point in collision");
       return -1;
     }
     else
