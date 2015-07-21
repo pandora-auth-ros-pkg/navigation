@@ -7,6 +7,7 @@ find_package(catkin REQUIRED
         roscpp
         nav_core
         costmap_2d
+        base_local_planner
         actionlib_msgs
         std_msgs
         pluginlib
@@ -29,6 +30,7 @@ catkin_package(
     LIBRARIES move_backwards_recovery
     CATKIN_DEPENDS
         roscpp
+        base_local_planner
         pluginlib
         nav_core
 )

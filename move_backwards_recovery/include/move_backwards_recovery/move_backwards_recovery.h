@@ -7,6 +7,7 @@
 #include <boost/thread.hpp>
 #include <dynamic_reconfigure/Reconfigure.h>
 #include <sensor_msgs/LaserScan.h>
+#include <base_local_planner/line_iterator.h>
 
 namespace move_backwards_recovery
 {
@@ -23,16 +24,19 @@ namespace move_backwards_recovery
 
       /// Run the behavior
       void runBehavior();
-      void laserCallback(const sensor_msgs::LaserScanPtr& laser_scan);
     private:
+      std::vector<int> createFootprintCollision(std::vector<geometry_msgs::Point>& footprint);
+      int lineInCollision(int x0, int x1, int y0, int y1);
+      int pointInCollision(int x, int y);
+      std::vector<int>footprint_collision_;
+
       ros::NodeHandle private_nh_, planner_nh_;
       costmap_2d::Costmap2DROS* global_costmap_;
       costmap_2d::Costmap2DROS* local_costmap_;
       bool initialized_;
       double linear_escape_vel_, angular_escape_vel_;
       ros::ServiceClient planner_dynamic_reconfigure_service_;
-      ros::Subscriber laser_subscriber_;
-      sensor_msgs::LaserScanPtr laser_scan_;
+
   };
 };
 
