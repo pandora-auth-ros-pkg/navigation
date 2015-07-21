@@ -16,7 +16,7 @@ namespace collision_recovery
   {
   }
 
-  void CollisionRecovery::initialize (std::string n, tf::TransformListener* tf,
+  void CollisionRecovery::initialize (std::string name, tf::TransformListener* tf,
       costmap_2d::Costmap2DROS* global_costmap,
       costmap_2d::Costmap2DROS* local_costmap)
   {
@@ -27,7 +27,7 @@ namespace collision_recovery
       local_costmap_ = local_costmap;
       lines_ = false;
       yolo = false;
-      ros::NodeHandle private_nh_("~/" + n);
+      ros::NodeHandle private_nh_("~/" + name);
       private_nh_.param("linear_escape_vel", linear_escape_vel_, 0.3);
       private_nh_.param("angular_escape_vel", angular_escape_vel_, 0.2);
       linear_escape_vel_ = 0.3;
@@ -39,10 +39,10 @@ namespace collision_recovery
 
       initialized_ = true;
 
-      ROS_WARN("[Move_Backwards_Recovery] Initialized move backwards recovery!");
+      ROS_WARN("[collision_recovery] Loaded %s!", name.c_str());
     }
     else{
-      ROS_ERROR("[Move_Backwards_Recovery] You should not call initialize twice on this object, doing nothing");
+      ROS_ERROR("[collision_recovery] You should not call initialize twice on this object, doing nothing");
     }
   }
 
@@ -50,16 +50,16 @@ namespace collision_recovery
   {
     if(!initialized_)
     {
-      ROS_ERROR("[Move_Backwards_Recovery] This object must be initialized before runBehavior is called");
+      ROS_ERROR("[collision_recovery] This object must be initialized before runBehavior is called");
       return;
     }
 
     if(global_costmap_ == NULL || local_costmap_ == NULL){
-      ROS_ERROR("[Move_Backwards_Recovery] The costmaps passed to the CollisionRecovery object cannot be NULL. Doing nothing.");
+      ROS_ERROR("[collision_recovery] The costmaps passed to the CollisionRecovery object cannot be NULL. Doing nothing.");
       return;
     }
 
-    ROS_WARN("[Move_Backwards_Recovery] Move backwards recovery behavior started.");
+    ROS_WARN("[collision_recovery] Move backwards recovery behavior started.");
 
     ros::NodeHandle n;
     ros::Publisher vel_pub = n.advertise<geometry_msgs::Twist>("cmd_vel", 10);
@@ -83,21 +83,21 @@ namespace collision_recovery
 
         if(front == -1 && left == -1 && back == -1 && right == -1)
         {
-          ROS_WARN("[CollisionCheckingRecovery] You really messed this up dude! Going back #YOLO vel_x[%f]",cmd_vel.linear.x);
+          ROS_WARN("[collision_recovery] You really messed this up dude! Going back #YOLO vel_x[%f]",cmd_vel.linear.x);
           cmd_vel.linear.x = -linear_escape_vel_;
           cmd_vel.linear.y = 0.0;
           cmd_vel.angular.z = 0.0;
         }
         if(front == -1 && left == -1 && back == 0 && right == 0)
         {
-          ROS_WARN("[CollisionCheckingRecovery] Front Left in collision, turning back right vel_x[%f], ang_z[%f]", cmd_vel.linear.x, cmd_vel.angular.z);
+          ROS_WARN("[collision_recovery] Front Left in collision, turning back right vel_x[%f], ang_z[%f]", cmd_vel.linear.x, cmd_vel.angular.z);
           cmd_vel.linear.x = -linear_escape_vel_;
           cmd_vel.linear.y = 0.0;
           cmd_vel.angular.z = angular_escape_vel_;
         }
         if(front == -1 && left == 0 && back == 0 && right == -1)
         {
-          ROS_WARN("[CollisionCheckingRecovery] Front Right in collision, turning back left vel_x[%f], ang_z[%f]", cmd_vel.linear.x, cmd_vel.angular.z);
+          ROS_WARN("[collision_recovery] Front Right in collision, turning back left vel_x[%f], ang_z[%f]", cmd_vel.linear.x, cmd_vel.angular.z);
           cmd_vel.linear.x = -linear_escape_vel_;
           cmd_vel.linear.y = 0.0;
           cmd_vel.angular.z = -angular_escape_vel_;
@@ -105,7 +105,7 @@ namespace collision_recovery
 
         if(front == 0 && left == -1 && back == -1 && right == 0)
         {
-          ROS_WARN("[CollisionCheckingRecovery] Left back in collision, going forward right vel_x[%f], ang_z[%f]", cmd_vel.linear.x, cmd_vel.angular.z);
+          ROS_WARN("[collision_recovery] Left back in collision, going forward right vel_x[%f], ang_z[%f]", cmd_vel.linear.x, cmd_vel.angular.z);
           cmd_vel.linear.x = linear_escape_vel_;
           cmd_vel.linear.y = 0.0;
           cmd_vel.angular.z = -angular_escape_vel_;
@@ -113,7 +113,7 @@ namespace collision_recovery
 
         if(front == 0 && left == 0 && back == -1 && right == -1)
         {
-          ROS_WARN("[CollisionCheckingRecovery] Right back in collision, going forward left vel_x[%f], ang_z[%f]", cmd_vel.linear.x, cmd_vel.angular.z);
+          ROS_WARN("[collision_recovery] Right back in collision, going forward left vel_x[%f], ang_z[%f]", cmd_vel.linear.x, cmd_vel.angular.z);
           cmd_vel.linear.x = linear_escape_vel_;
           cmd_vel.linear.y = 0.0;
           cmd_vel.angular.z = angular_escape_vel_;
@@ -121,7 +121,7 @@ namespace collision_recovery
 
         if(front == 0 && left == -1 && back == -1 && right == -1)
         {
-          ROS_WARN("[CollisionCheckingRecovery] Only front free, going forward vel_x[%f]", cmd_vel.linear.x);
+          ROS_WARN("[collision_recovery] Only front free, going forward vel_x[%f]", cmd_vel.linear.x);
           cmd_vel.linear.x = linear_escape_vel_;
           cmd_vel.linear.y = 0.0;
           cmd_vel.angular.z = 0.0;
@@ -129,7 +129,7 @@ namespace collision_recovery
 
         if(front == 0 && left == 0 && back == -1 && right == -1)
         {
-          ROS_WARN("[CollisionCheckingRecovery] Only back free, going back vel_x[%f]", cmd_vel.linear.x);
+          ROS_WARN("[collision_recovery] Only back free, going back vel_x[%f]", cmd_vel.linear.x);
           cmd_vel.linear.x = -linear_escape_vel_;
           cmd_vel.linear.y = 0.0;
           cmd_vel.angular.z = 0.0;
@@ -137,7 +137,7 @@ namespace collision_recovery
 
         if(front == 0 && left == 0 && back == 0 && right == 0)
         {
-          ROS_WARN("[CollisionCheckingRecovery] Ta triatafila einai kokkina oi toulipes einai ple, tsifsa rop ki ola kople, tpt den xtypaei");
+          ROS_WARN("[collision_recovery] Ta triatafila einai kokkina oi toulipes einai ple, tsifsa rop ki ola kople, tpt den xtypaei");
           cmd_vel.linear.x = 0.0;
           cmd_vel.linear.y = 0.0;
           cmd_vel.angular.z = 0.0;
@@ -170,21 +170,21 @@ namespace collision_recovery
             cmd_vel.linear.x = -linear_escape_vel_;
             cmd_vel.linear.y = 0.0;
             cmd_vel.angular.z = 0.0;
-            ROS_WARN("[CollisionCheckingRecovery] You really messed this up dude! Going back #YOLO vel_x[%f]",cmd_vel.linear.x);
+            ROS_WARN("[collision_recovery] You really messed this up dude! Going back #YOLO vel_x[%f]",cmd_vel.linear.x);
           }
           if(back_right == -1 && back_left == -1 && front_left == 0 && front_right == 0)
           {
             cmd_vel.linear.x = linear_escape_vel_;
             cmd_vel.linear.y = 0.0;
             cmd_vel.angular.z = 0.0;
-            ROS_WARN("[CollisionCheckingRecovery] Back Left and Back Right in collision going forward vel_x[%f]", cmd_vel.linear.x);
+            ROS_WARN("[collision_recovery] Back Left and Back Right in collision going forward vel_x[%f]", cmd_vel.linear.x);
           }
           if(back_right == -1 && back_left == 0 && front_left == 0 && front_right == -1)
           {
             cmd_vel.linear.x = -linear_escape_vel_;
             cmd_vel.linear.y = 0.0;
             cmd_vel.angular.z = angular_escape_vel_;
-            ROS_WARN("[CollisionCheckingRecovery] Back Right Front Right in collision, turning back left vel_x[%f], ang_z[%f]", cmd_vel.linear.x, cmd_vel.angular.z);
+            ROS_WARN("[collision_recovery] Back Right Front Right in collision, turning back left vel_x[%f], ang_z[%f]", cmd_vel.linear.x, cmd_vel.angular.z);
           }
 
           if(back_right == 0 && back_left == -1 && front_left == -1 && front_right == 0)
@@ -192,7 +192,7 @@ namespace collision_recovery
             cmd_vel.linear.x = linear_escape_vel_;
             cmd_vel.linear.y = 0.0;
             cmd_vel.angular.z = -angular_escape_vel_;
-            ROS_WARN("[CollisionCheckingRecovery] Back Left Front left in collision, turning back right vel_x[%f], ang_z[%f]", cmd_vel.linear.x, cmd_vel.angular.z);
+            ROS_WARN("[collision_recovery] Back Left Front left in collision, turning back right vel_x[%f], ang_z[%f]", cmd_vel.linear.x, cmd_vel.angular.z);
           }
 
 
@@ -201,7 +201,7 @@ namespace collision_recovery
             cmd_vel.linear.x = -linear_escape_vel_;
             cmd_vel.linear.y = 0.0;
             cmd_vel.angular.z = -angular_escape_vel_;
-            ROS_WARN("[CollisionCheckingRecovery] Only back_right free, going back right vel_x[%f], ang_z[%f]", cmd_vel.linear.x, cmd_vel.angular.z);
+            ROS_WARN("[collision_recovery] Only back_right free, going back right vel_x[%f], ang_z[%f]", cmd_vel.linear.x, cmd_vel.angular.z);
           }
 
           if(back_right == 0 && back_left == 0 && front_left == -1 && front_right == -1)
@@ -209,7 +209,7 @@ namespace collision_recovery
             cmd_vel.linear.x = -linear_escape_vel_;
             cmd_vel.linear.y = 0.0;
             cmd_vel.angular.z = 0.0;
-            ROS_WARN("[CollisionCheckingRecovery] Front left and right in collision, going back vel_x[%f]", cmd_vel.linear.x);
+            ROS_WARN("[collision_recovery] Front left and right in collision, going back vel_x[%f]", cmd_vel.linear.x);
           }
 
           if(back_right == 0 && back_left == 0 && front_left == 0 && front_right == 0)
@@ -217,7 +217,7 @@ namespace collision_recovery
             cmd_vel.linear.x = 0.0;
             cmd_vel.linear.y = 0.0;
             cmd_vel.angular.z = 0.0;
-            ROS_WARN("[CollisionCheckingRecovery] Ta triatafila einai kokkina oi toulipes einai ple, tsifsa rop ki ola kople, tpt den xtypaei");
+            ROS_WARN("[collision_recovery] Ta triatafila einai kokkina oi toulipes einai ple, tsifsa rop ki ola kople, tpt den xtypaei");
             break;
           }
           index++;
@@ -229,9 +229,7 @@ namespace collision_recovery
 
     }
     else
-      ROS_ERROR("[CollisionCheckingRecovery] Collision vector empty, sending zero velocities!");
-
-    /****/
+      ROS_ERROR("[collision_recovery] Collision vector empty, sending zero velocities!");
   }
 
   /*
@@ -287,7 +285,7 @@ namespace collision_recovery
     }
     else
     {
-      ROS_ERROR("[Move Back Recovery] Footprint not a rectangle!");
+      ROS_ERROR("[collision_recovery] Footprint not a rectangle!");
     }
     return footprint_collision_;
   }
