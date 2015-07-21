@@ -1,7 +1,0 @@
-<library path="lib/libmove_backwards_recovery">
-  <class name="move_backwards_recovery/MoveBackwardsRecovery" type="move_backwards_recovery::MoveBackwardsRecovery" base_class_type="nav_core::RecoveryBehavior">
-    <description>
-      A recovery behavior that moves the robot in the opposite direction in order to get it unstuck.
-    </description>
-  </class>
-</library>

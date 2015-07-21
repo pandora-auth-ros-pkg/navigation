@@ -1,21 +1,21 @@
-#include <move_backwards_recovery/move_backwards_recovery.h>
+#include <move_backwards_recovery/collision_recovery.h>
 #include <pluginlib/class_list_macros.h>
 #include <costmap_2d/obstacle_layer.h>
 
 
-PLUGINLIB_DECLARE_CLASS(move_backwards_recovery, MoveBackwardsRecovery, move_backwards_recovery::MoveBackwardsRecovery,
+PLUGINLIB_DECLARE_CLASS(collsion_recovery, CollisionRecovery, move_backwards_recovery::CollisionRecovery,
     nav_core::RecoveryBehavior)
 
 namespace move_backwards_recovery
 {
-  MoveBackwardsRecovery::MoveBackwardsRecovery(): global_costmap_(NULL), local_costmap_(NULL),
+  CollisionRecovery::CollisionRecovery(): global_costmap_(NULL), local_costmap_(NULL),
     initialized_(false) {}
 
-  MoveBackwardsRecovery::~MoveBackwardsRecovery()
+  CollisionRecovery::~CollisionRecovery()
   {
   }
 
-  void MoveBackwardsRecovery::initialize (std::string n, tf::TransformListener* tf,
+  void CollisionRecovery::initialize (std::string n, tf::TransformListener* tf,
       costmap_2d::Costmap2DROS* global_costmap,
       costmap_2d::Costmap2DROS* local_costmap)
   {
@@ -43,7 +43,7 @@ namespace move_backwards_recovery
     }
   }
 
-  void MoveBackwardsRecovery::runBehavior()
+  void CollisionRecovery::runBehavior()
   {
     if(!initialized_)
     {
@@ -52,7 +52,7 @@ namespace move_backwards_recovery
     }
 
     if(global_costmap_ == NULL || local_costmap_ == NULL){
-      ROS_ERROR("[Move_Backwards_Recovery] The costmaps passed to the MoveBackwardsRecovery object cannot be NULL. Doing nothing.");
+      ROS_ERROR("[Move_Backwards_Recovery] The costmaps passed to the CollisionRecovery object cannot be NULL. Doing nothing.");
       return;
     }
 
@@ -151,7 +151,7 @@ namespace move_backwards_recovery
   that corresponds to those lines (back, left, front, right) needs a 2D costmap
   to be stored
   */
-  std::vector<int> MoveBackwardsRecovery::createFootprintCollision(
+  std::vector<int> CollisionRecovery::createFootprintCollision(
     std::vector<geometry_msgs::Point>& footprint)
   {
     if(footprint.size() == 4)
@@ -181,7 +181,7 @@ namespace move_backwards_recovery
   }
   /* Helpers */
   // if point is in collision return -1, else 0
-  int MoveBackwardsRecovery::pointInCollision(int x, int y)
+  int CollisionRecovery::pointInCollision(int x, int y)
   {
     unsigned char cost = global_costmap_->getCostmap()->getCost(x,y);
     if(cost == costmap_2d::LETHAL_OBSTACLE || cost == costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
@@ -194,7 +194,7 @@ namespace move_backwards_recovery
   then the line is considered in collision
   return -1 if in collision
   */
-  int MoveBackwardsRecovery::lineInCollision(int x0, int x1, int y0, int y1){
+  int CollisionRecovery::lineInCollision(int x0, int x1, int y0, int y1){
 
     int line_cost = 0;
     int point_cost = 0;

@@ -1,13 +1,13 @@
 <package>
-    <name>move_backwards_recovery</name>
+    <name>collision_recovery</name>
     <version>0.1.0</version>
     <description>
 
-        move_backwards_recovery
+        collision_recovery
 
     </description>
-    <author>Dimitris Geromichalos</author>
-    <maintainer email="geromidg@gmail.com">Dimitris Geromichalos</maintainer>
+    <author>Dimitrios Kirtsios</author>
+    <maintainer email="dimkirts@gmail.com">Dimitrios Kirtsios</maintainer>
     <license>BSD</license>
 
     <buildtool_depend>catkin</buildtool_depend>
@@ -28,7 +28,7 @@
     <run_depend>pluginlib</run_depend>
 
     <export>
-        <nav_core plugin="${prefix}/move_backwards_recovery_plugin.xml" />
+        <nav_core plugin="${prefix}/collision_recovery_plugin.xml" />
     </export>
 
 </package>

@@ -1,21 +1,20 @@
-#ifndef MOVE_BACKWARDS_RECOVERY_MOVE_BACKWARDS_RECOVERY_H_
-#define MOVE_BACKWARDS_RECOVERY_MOVE_BACKWARDS_RECOVERY_H_
+#ifndef COLLISION_RECOVERY_H_
+#define COLLISION_RECOVERY_H_
 
 #include <ros/ros.h>
 #include <nav_core/recovery_behavior.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <boost/thread.hpp>
 #include <dynamic_reconfigure/Reconfigure.h>
-#include <sensor_msgs/LaserScan.h>
 #include <base_local_planner/line_iterator.h>
 
-namespace move_backwards_recovery
+namespace collision_recovery
 {
-  class MoveBackwardsRecovery : public nav_core::RecoveryBehavior
+  class CollisionRecovery : public nav_core::RecoveryBehavior
   {
     public:
-      MoveBackwardsRecovery();
-      ~MoveBackwardsRecovery();
+      CollisionRecovery();
+      ~CollisionRecovery();
 
       /// Initialize the parameters of the behavior
       void initialize (std::string n, tf::TransformListener* tf,
@@ -38,6 +37,6 @@ namespace move_backwards_recovery
       ros::ServiceClient planner_dynamic_reconfigure_service_;
 
   };
-};
+}
 
 #endif

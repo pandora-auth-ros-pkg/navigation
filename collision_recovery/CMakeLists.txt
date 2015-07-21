@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(move_backwards_recovery)
+project(collision_recovery)
 
 find_package(catkin REQUIRED
     COMPONENTS
@@ -27,7 +27,7 @@ add_definitions(${EIGEN_DEFINITIONS})
 
 catkin_package(
     INCLUDE_DIRS include
-    LIBRARIES move_backwards_recovery
+    LIBRARIES collision_recovery
     CATKIN_DEPENDS
         roscpp
         base_local_planner
@@ -35,7 +35,7 @@ catkin_package(
         nav_core
 )
 
-add_library(${PROJECT_NAME} src/move_backwards_recovery.cpp)
+add_library(${PROJECT_NAME} src/collision_recovery.cpp)
 add_dependencies(${PROJECT_NAME} geometry_msgs_gencpp)
 target_link_libraries(${PROJECT_NAME}
     ${Boost_LIBRARIES}
@@ -48,11 +48,11 @@ install(DIRECTORY include/${PROJECT_NAME}/
     FILES_MATCHING PATTERN "*.h"
     PATTERN ".svn" EXCLUDE)
 
-install(TARGETS move_backwards_recovery
+install(TARGETS collision_recovery
        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
        )
 
-install(FILES move_backwards_recovery_plugin.xml
+install(FILES collision_recovery_plugin.xml
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
