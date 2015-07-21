@@ -1,0 +1,7 @@
+<library path="lib/libcollision_recovery">
+  <class name="collision_recovery/CollisionRecovery" type="collision_recovery::CollisionRecovery" base_class_type="nav_core::RecoveryBehavior">
+    <description>
+      A recovery behavior that moves the robot in the opposite direction in order to get it unstuck.
+    </description>
+  </class>
+</library>
