@@ -6,7 +6,6 @@
 #include <costmap_2d/costmap_2d_ros.h>
 #include <boost/thread.hpp>
 #include <dynamic_reconfigure/Reconfigure.h>
-#include <base_local_planner/line_iterator.h>
 #include <costmap_2d/costmap_2d.h>
 
 
@@ -27,11 +26,11 @@ namespace collision_recovery
       void runBehavior();
     private:
       std::vector<int> createFootprintCollision(std::vector<geometry_msgs::Point>& footprint);
-      int lineInCollision(int x0, int x1, int y0, int y1);
+      int lineInCollision(geometry_msgs::Point& p0, geometry_msgs::Point& p1);
       int pointInCollision(double wx, double wy);
 
       std::vector<int>footprint_collision_;
-
+      bool lines_, yolo;
       ros::NodeHandle private_nh_, planner_nh_;
       costmap_2d::Costmap2DROS* global_costmap_;
       costmap_2d::Costmap2DROS* local_costmap_;
