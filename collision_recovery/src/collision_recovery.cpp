@@ -64,8 +64,10 @@ namespace collision_recovery
     /** Recovery **/
     geometry_msgs::Twist cmd_vel;
 
+    std::cout<<"Footprint Collision Vector Before"<<footprint_collision_[0]<<footprint_collision_[1]<<footprint_collision_[2]<<footprint_collision_[3];
     std::vector<geometry_msgs::Point> footprint = global_costmap_->getRobotFootprint();
     createFootprintCollision(footprint);
+    std::cout<<"Footprint Collision Vector After"<<footprint_collision_[0]<<footprint_collision_[1]<<footprint_collision_[2]<<footprint_collision_[3];
 
     if(footprint_collision_.size() != 0)
     {
