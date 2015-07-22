@@ -160,6 +160,8 @@ namespace collision_recovery
             cmd_vel.angular.z = 0.0;
             ROS_WARN("[collision_recovery] You really messed this up dude! #YOLO, going back with vel_x[%f]",cmd_vel.linear.x);
           }
+
+          // Two point collision
           if(back_right == -1 && back_left == -1 && front_left == 0 && front_right == 0)
           {
             cmd_vel.linear.x = linear_escape_vel_;
@@ -174,7 +176,6 @@ namespace collision_recovery
             cmd_vel.angular.z = angular_escape_vel_;
             ROS_WARN("[collision_recovery] back_right and front_right in collision, turning left with ang_z[%f]", cmd_vel.angular.z);
           }
-
           if(back_right == 0 && back_left == -1 && front_left == -1 && front_right == 0)
           {
             cmd_vel.linear.x = 0.0;
@@ -182,7 +183,6 @@ namespace collision_recovery
             cmd_vel.angular.z = -angular_escape_vel_;
             ROS_WARN("[collision_recovery] back_left and front_left in collision, turning right with ang_z[%f]", cmd_vel.angular.z);
           }
-
           if(back_right == 0 && back_left == 0 && front_left == -1 && front_right == -1)
           {
             cmd_vel.linear.x = -linear_escape_vel_;
@@ -192,6 +192,7 @@ namespace collision_recovery
           }
 
           /*
+          // Three point collision
           if(back_right == 0 && back_left == -1 && front_left == -1 && front_right == -1)
           {
             cmd_vel.linear.x = -linear_escape_vel_;
@@ -201,6 +202,37 @@ namespace collision_recovery
           }
           */
 
+          // One point collision
+          if(back_right == -1 && back_left == 0 && front_left == 0 && front_right == 0)
+          {
+            cmd_vel.linear.x = 0.0;
+            cmd_vel.linear.y = 0.0;
+            cmd_vel.angular.z = -angular_escape_vel_;
+            ROS_WARN("[collision_recovery] back_right in collision, turning right with ang_z[%f]", cmd_vel.angular.z);
+          }
+          if(back_right == 0 && back_left == -1 && front_left == 0 && front_right == 0)
+          {
+            cmd_vel.linear.x = 0.0;
+            cmd_vel.linear.y = 0.0;
+            cmd_vel.angular.z = angular_escape_vel_;
+            ROS_WARN("[collision_recovery] back_left in collision, turning left with ang_z[%f]", cmd_vel.angular.z);
+          }
+          if(back_right == 0 && back_left == 0 && front_left == -1 && front_right == 0)
+          {
+            cmd_vel.linear.x = 0.0;
+            cmd_vel.linear.y = 0.0;
+            cmd_vel.angular.z = -angular_escape_vel_;
+            ROS_WARN("[collision_recovery] front_left in collision, turning right with ang_z[%f]", cmd_vel.angular.z);
+          }
+          if(back_right == 0 && back_left == 0 && front_left == 0 && front_right == -1)
+          {
+            cmd_vel.linear.x = 0.0;
+            cmd_vel.linear.y = 0.0;
+            cmd_vel.angular.z = angular_escape_vel_;
+            ROS_WARN("[collision_recovery] front_right in collision, turning left with ang_z[%f]", cmd_vel.angular.z);
+          }
+
+          // No collision
           if(back_right == 0 && back_left == 0 && front_left == 0 && front_right == 0)
           {
             cmd_vel.linear.x = 0.0;
