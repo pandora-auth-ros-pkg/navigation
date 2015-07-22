@@ -28,8 +28,8 @@ namespace collision_recovery
       lines_ = false;
       yolo = false;
       ros::NodeHandle private_nh_("~/" + name);
-      private_nh_.param("linear_escape_vel", linear_escape_vel_, 0.2);
-      private_nh_.param("angular_escape_vel", angular_escape_vel_, 0.2);
+      private_nh_.param("linear_escape_vel", linear_escape_vel_, 0.05);
+      private_nh_.param("angular_escape_vel", angular_escape_vel_, 0.1);
       std::string planner_namespace;
       private_nh_.param("planner_namespace", planner_namespace, std::string("DWAPlannerROS"));
       planner_nh_ = ros::NodeHandle("~/" + planner_namespace);
@@ -139,10 +139,10 @@ namespace collision_recovery
       else
       {
         ros::NodeHandle n;
-        ros::Rate r(0.5);
+        ros::Rate r(1.0);
 
         int index = 0;
-        while (n.ok() && index < 3)
+        while (n.ok() && index < 2)
         {
           cmd_vel.linear.x = 0.0;
           cmd_vel.linear.y = 0.0;
